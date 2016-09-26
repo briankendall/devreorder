@@ -138,6 +138,29 @@ bool FullPathFromPath(std::string* path, const std::string& in_path)
 	return false;
 }
 
+bool FullPathFromPath(std::wstring* path, const std::wstring& in_path)
+{
+	if (PathIsRelativeW(in_path.c_str()))
+	{
+		std::unique_ptr<WCHAR[]> buffer(new WCHAR[MAX_PATH]);
+		if (GetModuleFileNameW(CurrentModule(), buffer.get(), MAX_PATH) &&
+			PathRemoveFileSpecW(buffer.get()))
+		{
+			PathAppendW(buffer.get(), in_path.c_str());
+			*path = buffer.get();
+		}
+	}
+	else
+	{
+		*path = in_path;
+	}
+
+	if (FileExist(*path))
+		return true;
+
+	return false;
+}
+
 bool StringPathCombine(std::string* dest, const std::string& path, const std::string& more)
 {
 	std::unique_ptr<char[]> buffer(new char[MAX_PATH]);

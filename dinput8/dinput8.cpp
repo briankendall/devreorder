@@ -36,14 +36,11 @@ vector<wstring> loadAllKeysFromSectionOfIni(const wstring &section)
 		return result;
 	}
 
-	PrintLog("reading ini");
-
 	CSimpleIniW::TNamesDepend keys;
 	ini.GetAllKeys(section.c_str(), keys);
 	keys.sort(CSimpleIniW::Entry::LoadOrder());
 
 	for (CSimpleIniW::TNamesDepend::iterator it = keys.begin(); it != keys.end(); ++it) {
-		PrintLog("key: %s", UTF16ToUTF8(it->pItem).c_str());
 		result.push_back(it->pItem);
 	}
 
@@ -178,19 +175,16 @@ bool enumCallback(const DeviceType *deviceInstance, LPVOID userData)
 
 BOOL CALLBACK enumCallbackA(LPCDIDEVICEINSTANCEA deviceInstance, LPVOID userData)
 {
-	PrintLog("calling enumCallbackA");
 	return enumCallback<DIDEVICEINSTANCEA, string>(deviceInstance, userData);
 }
 
 BOOL CALLBACK enumCallbackW(LPCDIDEVICEINSTANCEW deviceInstance, LPVOID userData)
 {
-	PrintLog("calling enumCallbackW");
 	return enumCallback<DIDEVICEINSTANCEW, wstring>(deviceInstance, userData);
 }
 
 HRESULT STDMETHODCALLTYPE HookEnumDevicesA(LPDIRECTINPUT8A This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags)
 {
-	PrintLog("IDirectInput8A::EnumDevicesA");
 	vector<string> &order = sortedControllersA();
 	DeviceEnumData<DIDEVICEINSTANCEA> enumData;
 
@@ -221,7 +215,6 @@ HRESULT STDMETHODCALLTYPE HookEnumDevicesA(LPDIRECTINPUT8A This, DWORD dwDevType
 
 HRESULT STDMETHODCALLTYPE HookEnumDevicesW(LPDIRECTINPUT8W This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags)
 {
-	PrintLog("IDirectInput8W::EnumDevicesW");
 	vector<wstring> &order = sortedControllersW();
 	DeviceEnumData<DIDEVICEINSTANCEW> enumData;
 
@@ -252,7 +245,7 @@ HRESULT STDMETHODCALLTYPE HookEnumDevicesW(LPDIRECTINPUT8W This, DWORD dwDevType
 
 extern "C" HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID *ppvOut, LPUNKNOWN punkOuter)
 {
-	OutputDebugString(L"Testing DirectInput8Create!");
+	OutputDebugString(L"Calling overridden DirectInput8Create");
 
 	HRESULT hr = DirectInputModuleManager::Get().DirectInput8Create(hinst, dwVersion, riidltf, ppvOut, punkOuter);
 

@@ -180,7 +180,6 @@
     <ClInclude Include="..\simpleini\SimpleIni.h" />
     <ClInclude Include="..\x360ce\Common\COMDeleter.h" />
     <ClInclude Include="..\x360ce\Common\Common.h" />
-    <ClInclude Include="..\x360ce\Common\IniFile.h" />
     <ClInclude Include="..\x360ce\Common\Logger.h" />
     <ClInclude Include="..\x360ce\Common\Mutex.h" />
     <ClInclude Include="..\x360ce\Common\NonCopyable.h" />
@@ -201,7 +200,6 @@
     <ClCompile Include="..\minhook\src\hde\hde64.c" />
     <ClCompile Include="..\minhook\src\hook.c" />
     <ClCompile Include="..\minhook\src\trampoline.c" />
-    <ClCompile Include="..\x360ce\Common\IniFile.cpp" />
     <ClCompile Include="..\x360ce\Common\StringUtils.cpp" />
     <ClCompile Include="..\x360ce\Common\Timer.cpp" />
     <ClCompile Include="..\x360ce\Common\Utils.cpp" />

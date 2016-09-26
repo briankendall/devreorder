@@ -81,9 +81,6 @@
     <ClInclude Include="..\x360ce\Common\Common.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\x360ce\Common\IniFile.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\x360ce\Common\Logger.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -129,9 +126,6 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\x360ce\Common\WindowsVersion.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\x360ce\Common\IniFile.cpp">
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\x360ce\Common\StringUtils.cpp">

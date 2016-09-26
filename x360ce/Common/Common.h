@@ -9,7 +9,6 @@
 #include "Utils.h"
 #include "Mutex.h"
 #include "StringUtils.h"
-#include "IniFile.h"
 #include "Timer.h"
 #include "WindowsVersion.h"
 #include "COMDeleter.h"

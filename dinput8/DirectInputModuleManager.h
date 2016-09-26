@@ -4,6 +4,7 @@
 
 #include <windows.h>
 #include <xinput.h>
+#include "SimpleIni.h"
 
 #include "Common.h"
 
@@ -18,23 +19,28 @@ public:
 
 	DirectInputModuleManager()
 	{
-		IniFile ini;
-		std::string inipath("devreorder.ini");
-		if (!ini.Load(inipath))
-		{
-			CheckCommonDirectory(&inipath, "devreorder");
-			ini.Load(inipath);
-		}
-		std::string loaded_module_path;
-		std::string chainload_filename;
+		std::wstring loadedModulePath, chainLoadFileName;
+		CSimpleIniW ini;
+		ini.SetAllowEmptyValues(false);
+		std::wstring inipath(L"devreorder.ini");
+		SI_Error err = ini.LoadFile(inipath.c_str());
 
-		if (ini.Get("DINPUT8", "ChainLoadFileName", &chainload_filename))
-		{
-			FullPathFromPath(&loaded_module_path, chainload_filename);
-			m_module = LoadLibraryA(loaded_module_path.c_str());
+		if (err < 0) {
+			CheckCommonDirectory(&inipath, L"devreorder");
+			err = ini.LoadFile(inipath.c_str());
 		}
-		else
-		{
+
+		if (err >= 0) {
+			PrintLog("Getting chain load");
+			chainLoadFileName = ini.GetValue(L"\0", L"ChainLoadFileName", L"");
+			PrintLog("Result: %s", UTF16ToUTF8(chainLoadFileName).c_str());
+		}
+
+		if (chainLoadFileName.size() > 0) {
+			PrintLog("Using chain load");
+			FullPathFromPath(&loadedModulePath, chainLoadFileName);
+			m_module = LoadLibraryW(loadedModulePath.c_str());
+		} else {
 			// Check to make sure we're not in the system32 directory and trying to load ourselves:
 			std::wstring modulePath = thisModuleDirectory();
 			std::transform(modulePath.begin(), modulePath.end(), modulePath.begin(), towlower);
@@ -42,29 +48,25 @@ public:
 			std::wstring systemDirectory = getSystemDirectoryString();
 			std::transform(systemDirectory.begin(), systemDirectory.end(), systemDirectory.begin(), towlower);
 
-			OutputDebugStringW(modulePath.c_str());
-			OutputDebugStringW(systemDirectory.c_str());
-
 			if (modulePath == systemDirectory) {
 				// If we are in system32 then the user needs to have renamed  the original dll to dinput8org.dll:
-				m_module = LoadLibrarySystem("dinput8org.dll", &loaded_module_path);
+				m_module = LoadLibrarySystem(L"dinput8org.dll", &loadedModulePath);
 			} else {
-				m_module = LoadLibrarySystem("dinput8.dll", &loaded_module_path);
+				m_module = LoadLibrarySystem(L"dinput8.dll", &loadedModulePath);
 			}
 		}
 
 		if (!m_module)
 		{
 			HRESULT hr = GetLastError();
-			std::unique_ptr<char[]> error_msg(new char[MAX_PATH]);
-			sprintf_s(error_msg.get(), MAX_PATH, "Cannot load \"%s\" error: 0x%x", loaded_module_path.c_str(), hr);
-			PrintLog(error_msg.get());
-			MessageBoxA(NULL, error_msg.get(), "Error", MB_ICONERROR);
+			std::unique_ptr<WCHAR[]> error_msg(new WCHAR[MAX_PATH]);
+			swprintf_s(error_msg.get(), MAX_PATH, L"Cannot load \"%s\" error: 0x%x", loadedModulePath.c_str(), hr);
+			MessageBoxW(NULL, error_msg.get(), L"Error", MB_ICONERROR);
 			exit(hr);
 		}
 		else
 		{
-			PrintLog("Loaded \"%s\"", loaded_module_path.c_str());
+			PrintLog("Loaded \"%s\"", UTF16ToUTF8(loadedModulePath).c_str());
 		}
 
 		GetProcAddress("DirectInput8Create", &DirectInput8Create);

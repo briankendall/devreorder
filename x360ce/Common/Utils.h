@@ -26,6 +26,7 @@ bool FileExist(const std::wstring& path);
 bool CheckCommonDirectory(std::string* outpath, const std::string& dirname);
 bool CheckCommonDirectory(std::wstring* outpath, const std::wstring& dirname);
 bool FullPathFromPath(std::string* fullpath, const std::string& name);
+bool FullPathFromPath(std::wstring* fullpath, const std::wstring& name);
 
 bool StringPathCombine(std::string* dest, const std::string& path, const std::string& more);
 bool StringPathCombine(std::wstring* dest, const std::wstring& path, const std::wstring& more);
