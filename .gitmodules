@@ -1,3 +1,6 @@
 [submodule "minhook"]
 	path = minhook
 	url = https://github.com/TsudaKageyu/minhook.git
+[submodule "simpleini"]
+	path = simpleini
+	url = https://github.com/briankendall/simpleini.git
