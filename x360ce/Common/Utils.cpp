@@ -72,6 +72,17 @@ bool FileExist(const std::string& path)
 	return false;
 }
 
+bool FileExist(const std::wstring& path)
+{
+	HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFile != INVALID_HANDLE_VALUE)
+	{
+		CloseHandle(hFile);
+		return true;
+	}
+	return false;
+}
+
 bool CheckCommonDirectory(std::string* outpath, const std::string& dirname)
 {
 	std::unique_ptr<char[]> path(new char[MAX_PATH]);
@@ -79,6 +90,22 @@ bool CheckCommonDirectory(std::string* outpath, const std::string& dirname)
 	{
 		PathAppendA(path.get(), dirname.c_str());
 		PathAppendA(path.get(), outpath->c_str());
+		if (FileExist(path.get()))
+		{
+			*outpath = path.get();
+			return true;
+		}
+	}
+	return false;
+}
+
+bool CheckCommonDirectory(std::wstring* outpath, const std::wstring& dirname)
+{
+	std::unique_ptr<WCHAR[]> path(new WCHAR[MAX_PATH]);
+	if (SHGetFolderPathW(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, path.get()) == S_OK)
+	{
+		PathAppendW(path.get(), dirname.c_str());
+		PathAppendW(path.get(), outpath->c_str());
 		if (FileExist(path.get()))
 		{
 			*outpath = path.get();

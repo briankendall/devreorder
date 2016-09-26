@@ -21,8 +21,10 @@ inline HMODULE& CurrentModule()
 }
 
 bool FileExist(const std::string& path);
+bool FileExist(const std::wstring& path);
 
 bool CheckCommonDirectory(std::string* outpath, const std::string& dirname);
+bool CheckCommonDirectory(std::wstring* outpath, const std::wstring& dirname);
 bool FullPathFromPath(std::string* fullpath, const std::string& name);
 
 bool StringPathCombine(std::string* dest, const std::string& path, const std::string& more);

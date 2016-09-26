@@ -19,6 +19,9 @@
     <Filter Include="Common">
       <UniqueIdentifier>{3e8f732c-1826-44d7-af01-9cb7b6eb61e1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SimpleIni">
+      <UniqueIdentifier>{99f7f07a-6fec-4e96-ba34-edc8190952c3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -89,6 +92,9 @@
     </ClInclude>
     <ClInclude Include="..\x360ce\Common\NonCopyable.h">
       <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\simpleini\SimpleIni.h">
+      <Filter>SimpleIni</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

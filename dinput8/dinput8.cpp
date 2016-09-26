@@ -9,6 +9,7 @@
 #include "Logger.h"
 #include "Utils.h"
 #include "DirectInputModuleManager.h"
+#include "SimpleIni.h"
 
 using namespace std;
 
@@ -17,15 +18,46 @@ HRESULT(STDMETHODCALLTYPE *TrueEnumDevicesW) (LPDIRECTINPUT8W This, DWORD dwDevT
 HRESULT(STDMETHODCALLTYPE *EnumDevicesA) (LPDIRECTINPUT8A This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags) = nullptr;
 HRESULT(STDMETHODCALLTYPE *EnumDevicesW) (LPDIRECTINPUT8W This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags) = nullptr;
 
+vector<wstring> loadAllKeysFromSectionOfIni(const wstring &section)
+{
+	vector<wstring> result;
+	CSimpleIniW ini;
+	ini.SetAllowEmptyValues(true);
+	wstring inipath(L"devreorder.ini");
+	SI_Error err = ini.LoadFile(inipath.c_str());
+
+	if (err < 0) {
+		CheckCommonDirectory(&inipath, L"devreorder");
+		err = ini.LoadFile(inipath.c_str());
+	}
+
+	if (err < 0) {
+		PrintLog("no ini file found");
+		return result;
+	}
+
+	PrintLog("reading ini");
+
+	CSimpleIniW::TNamesDepend keys;
+	ini.GetAllKeys(section.c_str(), keys);
+	keys.sort(CSimpleIniW::Entry::LoadOrder());
+
+	for (CSimpleIniW::TNamesDepend::iterator it = keys.begin(); it != keys.end(); ++it) {
+		PrintLog("key: %s", UTF16ToUTF8(it->pItem).c_str());
+		result.push_back(it->pItem);
+	}
+
+	return result;
+}
+
 vector<wstring> & sortedControllersW()
 {
 	static vector<wstring> result;
 	static bool needToInitialize = true;
 
 	if (needToInitialize) {
-		result.push_back(L"vJoy Device");
-
 		needToInitialize = false;
+		result = loadAllKeysFromSectionOfIni(L"order");
 	}
 
 	return result;
@@ -67,8 +99,7 @@ vector<wstring> & hiddenControllersW()
 	static bool needToInitialize = true;
 
 	if (needToInitialize) {
-		result.push_back(L"Wireless Controller");
-
+		result = loadAllKeysFromSectionOfIni(L"hidden");
 		needToInitialize = false;
 	}
 
@@ -142,7 +173,6 @@ bool enumCallback(const DeviceType *deviceInstance, LPVOID userData)
 	}
 
 	enumData->nonsorted.push_back(*deviceInstance);
-
 	return DIENUM_CONTINUE;
 }
 

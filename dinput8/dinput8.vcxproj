@@ -96,7 +96,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;DINPUT8_EXPORTS;LOGGER_DISABLE_TIME;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\..\x360ce\Common;$(ProjectDir)..\MinHook\Include;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\..\x360ce\Common;$(ProjectDir)..\SimpleIni;$(ProjectDir)..\MinHook\Include;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -115,7 +115,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;DINPUT8_EXPORTS;LOGGER_DISABLE_TIME;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\..\x360ce\Common;$(ProjectDir)..\MinHook\Include;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\..\x360ce\Common;$(ProjectDir)..\SimpleIni;$(ProjectDir)..\MinHook\Include;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -177,6 +177,7 @@
     <ClInclude Include="..\minhook\src\hde\table32.h" />
     <ClInclude Include="..\minhook\src\hde\table64.h" />
     <ClInclude Include="..\minhook\src\trampoline.h" />
+    <ClInclude Include="..\simpleini\SimpleIni.h" />
     <ClInclude Include="..\x360ce\Common\COMDeleter.h" />
     <ClInclude Include="..\x360ce\Common\Common.h" />
     <ClInclude Include="..\x360ce\Common\IniFile.h" />
