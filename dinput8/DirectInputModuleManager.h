@@ -19,10 +19,11 @@ public:
 	DirectInputModuleManager()
 	{
 		IniFile ini;
-		std::string inipath("x360ce.ini");
+		std::string inipath("devreorder.ini");
 		if (!ini.Load(inipath))
 		{
-			CheckCommonDirectory(&inipath, "x360ce");
+			CheckCommonDirectory(&inipath, "devreorder");
+			ini.Load(inipath);
 		}
 		std::string loaded_module_path;
 		std::string chainload_filename;
@@ -34,7 +35,22 @@ public:
 		}
 		else
 		{
-			m_module = LoadLibrarySystem("dinput8org.dll", &loaded_module_path);
+			// Check to make sure we're not in the system32 directory and trying to load ourselves:
+			std::wstring modulePath = thisModuleDirectory();
+			std::transform(modulePath.begin(), modulePath.end(), modulePath.begin(), towlower);
+
+			std::wstring systemDirectory = getSystemDirectoryString();
+			std::transform(systemDirectory.begin(), systemDirectory.end(), systemDirectory.begin(), towlower);
+
+			OutputDebugStringW(modulePath.c_str());
+			OutputDebugStringW(systemDirectory.c_str());
+
+			if (modulePath == systemDirectory) {
+				// If we are in system32 then the user needs to have renamed  the original dll to dinput8org.dll:
+				m_module = LoadLibrarySystem("dinput8org.dll", &loaded_module_path);
+			} else {
+				m_module = LoadLibrarySystem("dinput8.dll", &loaded_module_path);
+			}
 		}
 
 		if (!m_module)

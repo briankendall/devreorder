@@ -83,5 +83,5 @@ inline const u32 flipLong(u32 l)
 	return (((u32)flipShort((u16)l)) << 16) | flipShort((u16)(l >> 16));
 }
 
-
-
+std::wstring thisModuleDirectory();
+std::wstring getSystemDirectoryString();

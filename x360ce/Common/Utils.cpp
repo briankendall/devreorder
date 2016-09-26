@@ -261,4 +261,23 @@ bool GUIDtoString(std::wstring* out, const GUID &g)
 	return !out->empty();
 }
 
+std::wstring thisModuleDirectory()
+{
+	std::unique_ptr<WCHAR[]> buffer(new WCHAR[MAX_PATH]);
+	HMODULE hm;
+	if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+		(LPWSTR)&thisModuleDirectory, &hm)) {
+		return std::wstring();
+	}
 
+	GetModuleFileNameW(hm, buffer.get(), MAX_PATH);
+	PathRemoveFileSpecW(buffer.get());
+	return std::wstring(buffer.get());
+}
+
+std::wstring getSystemDirectoryString()
+{
+	std::unique_ptr<WCHAR[]> systemDirectoryBuffer(new WCHAR[MAX_PATH]);
+	GetSystemDirectoryW(systemDirectoryBuffer.get(), MAX_PATH);
+	return std::wstring(systemDirectoryBuffer.get());
+}
