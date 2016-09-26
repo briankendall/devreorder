@@ -70,7 +70,7 @@ BOOL MyGetProductInfo(DWORD dwOSMajorVersion, DWORD dwOSMinorVersion, DWORD dwSp
 	if (!RealGetProductInfo) return FALSE;
 	return RealGetProductInfo(dwOSMajorVersion, dwOSMinorVersion, dwSpMajorVersion, dwSpMinorVersion, pdwReturnedProductType);
 }
-
+/*
 bool GetWindowsVersionName(std::string* out)
 {
 	if (!out) return false;
@@ -195,3 +195,4 @@ bool GetWindowsVersionName(std::string* out)
 
 	return true;
 }
+*/

@@ -110,12 +110,12 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;DINPUT8_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;DINPUT8_EXPORTS;LOGGER_DISABLE_TIME;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\..\x360ce\Common;$(ProjectDir)..\InputHook;$(ProjectDir)\..\3rdparty\libMinHook\include;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\..\x360ce\Common;$(ProjectDir)..\MinHook\Include;$(DXSDK_DIR)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -123,8 +123,8 @@
       <AddModuleNamesToAssembly>
       </AddModuleNamesToAssembly>
       <ModuleDefinitionFile>dinput8.def</ModuleDefinitionFile>
-      <AdditionalLibraryDirectories>$(DXSDK_DIR)\Lib\x86</AdditionalLibraryDirectories>
-      <AdditionalDependencies>xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(DXSDK_DIR)\Lib\x64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dinput8.lib;dxguid.lib;psapi.lib;wintrust.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -177,6 +177,18 @@
     <ClInclude Include="..\minhook\src\hde\table32.h" />
     <ClInclude Include="..\minhook\src\hde\table64.h" />
     <ClInclude Include="..\minhook\src\trampoline.h" />
+    <ClInclude Include="..\x360ce\Common\COMDeleter.h" />
+    <ClInclude Include="..\x360ce\Common\Common.h" />
+    <ClInclude Include="..\x360ce\Common\IniFile.h" />
+    <ClInclude Include="..\x360ce\Common\Logger.h" />
+    <ClInclude Include="..\x360ce\Common\Mutex.h" />
+    <ClInclude Include="..\x360ce\Common\NonCopyable.h" />
+    <ClInclude Include="..\x360ce\Common\StringUtils.h" />
+    <ClInclude Include="..\x360ce\Common\targetver.h" />
+    <ClInclude Include="..\x360ce\Common\Timer.h" />
+    <ClInclude Include="..\x360ce\Common\Types.h" />
+    <ClInclude Include="..\x360ce\Common\Utils.h" />
+    <ClInclude Include="..\x360ce\Common\WindowsVersion.h" />
     <ClInclude Include="dinput8.h" />
     <ClInclude Include="DirectInputModuleManager.h" />
     <ClInclude Include="stdafx.h" />
@@ -188,6 +200,11 @@
     <ClCompile Include="..\minhook\src\hde\hde64.c" />
     <ClCompile Include="..\minhook\src\hook.c" />
     <ClCompile Include="..\minhook\src\trampoline.c" />
+    <ClCompile Include="..\x360ce\Common\IniFile.cpp" />
+    <ClCompile Include="..\x360ce\Common\StringUtils.cpp" />
+    <ClCompile Include="..\x360ce\Common\Timer.cpp" />
+    <ClCompile Include="..\x360ce\Common\Utils.cpp" />
+    <ClCompile Include="..\x360ce\Common\WindowsVersion.cpp" />
     <ClCompile Include="dinput8.cpp" />
     <ClCompile Include="dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
@@ -212,11 +229,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="dinput8.def" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\x360ce\Common\Common.vcxproj">
-      <Project>{0caee158-51e4-4c81-8cac-f39f744daf2d}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

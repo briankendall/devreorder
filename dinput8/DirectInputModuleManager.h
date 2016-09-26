@@ -34,7 +34,7 @@ public:
 		}
 		else
 		{
-			m_module = LoadLibrarySystem("dinput8.dll", &loaded_module_path);
+			m_module = LoadLibrarySystem("dinput8org.dll", &loaded_module_path);
 		}
 
 		if (!m_module)

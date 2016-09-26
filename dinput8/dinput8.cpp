@@ -2,12 +2,15 @@
 #define CINTERFACE
 #include "stdafx.h"
 #include <dinput.h>
+#include <list>
 
 #include "dinput8.h"
 #include "Common.h"
 #include "Logger.h"
 #include "Utils.h"
 #include "DirectInputModuleManager.h"
+
+using namespace std;
 
 HRESULT(WINAPI *TrueDirectInput8Create)(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID *ppvOut, LPUNKNOWN punkOuter) = nullptr;
 HRESULT(STDMETHODCALLTYPE *TrueCreateDeviceA) (LPDIRECTINPUT8A This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDeviceA, LPUNKNOWN pUnkOuter) = nullptr;
@@ -148,16 +151,209 @@ BOOL FAR PASCAL HookEnumCallbackW(LPCDIDEVICEINSTANCEW lpddi, LPVOID pvRef)
 	return TrueCallbackW(lpddi, pvRef);
 }
 */
+
+
+vector<wstring> & sortedControllersW()
+{
+	static vector<wstring> result;
+	static bool needToInitialize = true;
+
+	if (needToInitialize) {
+		result.push_back(L"vJoy Device");
+
+		needToInitialize = false;
+	}
+
+	return result;
+}
+
+vector<string> & sortedControllersA()
+{
+	static vector<string> result;
+	static bool needToInitialize = true;
+
+	if (needToInitialize) {
+		vector<wstring> &wideList = sortedControllersW();
+
+		for (unsigned int i = 0; i < wideList.size(); ++i) {
+			result.push_back(UTF16ToUTF8(wideList[i]));
+		}
+
+		needToInitialize = false;
+	}
+
+	return result;
+}
+
+vector<string> & sortedControllers(const string &ignored)
+{
+	(void)ignored;
+	return sortedControllersA();
+}
+
+vector<wstring> & sortedControllers(const wstring &ignored)
+{
+	(void)ignored;
+	return sortedControllersW();
+}
+
+vector<wstring> & hiddenControllersW()
+{
+	static vector<wstring> result;
+	static bool needToInitialize = true;
+
+	if (needToInitialize) {
+		result.push_back(L"Wireless Controller");
+
+		needToInitialize = false;
+	}
+
+	return result;
+}
+
+vector<string> & hiddenControllersA()
+{
+	static vector<string> result;
+	static bool needToInitialize = true;
+
+	if (needToInitialize) {
+		vector<wstring> &wideList = hiddenControllersW();
+
+		for(unsigned int i = 0; i < wideList.size(); ++i) {
+			result.push_back(UTF16ToUTF8(wideList[i]));
+		}
+
+		needToInitialize = false;
+	}
+
+	return result;
+}
+
+vector<string> & hiddenControllers(const string &ignored)
+{
+	(void)ignored;
+	return hiddenControllersA();
+}
+
+vector<wstring> & hiddenControllers(const wstring &ignored)
+{
+	(void)ignored;
+	return hiddenControllersW();
+}
+
+template <class T>
+struct DeviceEnumData {
+	list<T> nonsorted;
+	vector<list<T> > sorted;
+};
+
+bool stringsAreEqual(const string &a, const char *b)
+{
+	return strcmp(a.c_str(), b) == 0;
+}
+
+bool stringsAreEqual(const wstring &a, const WCHAR *b)
+{
+	return lstrcmpW(a.c_str(), b) == 0;
+}
+
+template <class DeviceType, class StringType>
+bool enumCallback(const DeviceType *deviceInstance, LPVOID userData)
+{
+	DeviceEnumData<DeviceType> *enumData = (DeviceEnumData<DeviceType> *)userData;
+	vector<StringType> &order = sortedControllers(StringType());
+	vector<StringType> &hidden = hiddenControllers(StringType());
+
+	for (unsigned int i = 0; i < hidden.size(); ++i) {
+		if (stringsAreEqual(hidden[i], deviceInstance->tszProductName)) {
+			return DIENUM_CONTINUE;
+		}
+	}
+
+	for (unsigned int i = 0; i < order.size(); ++i) {
+		if (stringsAreEqual(order[i], deviceInstance->tszProductName)) {
+			enumData->sorted[i].push_back(*deviceInstance);
+			return DIENUM_CONTINUE;
+		}
+	}
+
+	enumData->nonsorted.push_back(*deviceInstance);
+
+	return DIENUM_CONTINUE;
+}
+
+BOOL CALLBACK enumCallbackA(LPCDIDEVICEINSTANCEA deviceInstance, LPVOID userData)
+{
+	PrintLog("calling enumCallbackA");
+	return enumCallback<DIDEVICEINSTANCEA, string>(deviceInstance, userData);
+}
+
+BOOL CALLBACK enumCallbackW(LPCDIDEVICEINSTANCEW deviceInstance, LPVOID userData)
+{
+	PrintLog("calling enumCallbackW");
+	return enumCallback<DIDEVICEINSTANCEW, wstring>(deviceInstance, userData);
+}
+
 HRESULT STDMETHODCALLTYPE HookEnumDevicesA(LPDIRECTINPUT8A This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags)
 {
 	PrintLog("IDirectInput8A::EnumDevicesA");
-	return TrueEnumDevicesA(This, dwDevType, lpCallback, pvRef, dwFlags);
+	vector<string> &order = sortedControllersA();
+	DeviceEnumData<DIDEVICEINSTANCEA> enumData;
+
+	enumData.sorted.resize(order.size());
+
+	HRESULT result = TrueEnumDevicesA(This, dwDevType, enumCallbackA, (LPVOID)&enumData, dwFlags);
+
+	if (result != DI_OK) {
+		return result;
+	}
+
+	for(unsigned int i = 0; i < enumData.sorted.size(); ++i) {
+		for (list<DIDEVICEINSTANCEA>::iterator it = enumData.sorted[i].begin(); it != enumData.sorted[i].end(); ++it) {
+			if (lpCallback(&(*it), pvRef) != DIENUM_CONTINUE) {
+				return result;
+			}
+		}
+	}
+
+	for (list<DIDEVICEINSTANCEA>::iterator it = enumData.nonsorted.begin(); it != enumData.nonsorted.end(); ++it) {
+		if (lpCallback(&(*it), pvRef) != DIENUM_CONTINUE) {
+			return result;
+		}
+	}
+
+	return result;
 }
 
 HRESULT STDMETHODCALLTYPE HookEnumDevicesW(LPDIRECTINPUT8W This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags)
 {
 	PrintLog("IDirectInput8W::EnumDevicesW");
-	return TrueEnumDevicesW(This, dwDevType, lpCallback, pvRef, dwFlags);
+	vector<wstring> &order = sortedControllersW();
+	DeviceEnumData<DIDEVICEINSTANCEW> enumData;
+
+	enumData.sorted.resize(order.size());
+
+	HRESULT result = TrueEnumDevicesW(This, dwDevType, enumCallbackW, (LPVOID)&enumData, dwFlags);
+
+	if (result != DI_OK) {
+		return result;
+	}
+
+	for (unsigned int i = 0; i < enumData.sorted.size(); ++i) {
+		for (list<DIDEVICEINSTANCEW>::iterator it = enumData.sorted[i].begin(); it != enumData.sorted[i].end(); ++it) {
+			if (lpCallback(&(*it), pvRef) != DIENUM_CONTINUE) {
+				return result;
+			}
+		}
+	}
+
+	for (list<DIDEVICEINSTANCEW>::iterator it = enumData.nonsorted.begin(); it != enumData.nonsorted.end(); ++it) {
+		if (lpCallback(&(*it), pvRef) != DIENUM_CONTINUE) {
+			return result;
+		}
+	}
+
+	return result;
 }
 
 extern "C" HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID *ppvOut, LPUNKNOWN punkOuter)

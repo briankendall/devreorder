@@ -16,6 +16,9 @@
     <Filter Include="InputHook">
       <UniqueIdentifier>{b9809de3-7f60-4981-8a0f-3f76b12796dc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{3e8f732c-1826-44d7-af01-9cb7b6eb61e1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -51,6 +54,42 @@
     <ClInclude Include="..\minhook\src\hde\table64.h">
       <Filter>InputHook</Filter>
     </ClInclude>
+    <ClInclude Include="..\x360ce\Common\StringUtils.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\x360ce\Common\targetver.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\x360ce\Common\Timer.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\x360ce\Common\Types.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\x360ce\Common\Utils.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\x360ce\Common\WindowsVersion.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\x360ce\Common\COMDeleter.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\x360ce\Common\Common.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\x360ce\Common\IniFile.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\x360ce\Common\Logger.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\x360ce\Common\Mutex.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\x360ce\Common\NonCopyable.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -76,6 +115,21 @@
     </ClCompile>
     <ClCompile Include="..\minhook\src\hde\hde64.c">
       <Filter>InputHook</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x360ce\Common\Timer.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x360ce\Common\Utils.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x360ce\Common\WindowsVersion.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x360ce\Common\IniFile.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\x360ce\Common\StringUtils.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
