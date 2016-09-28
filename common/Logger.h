@@ -50,6 +50,14 @@ public:
 		va_end(args);
 	}
 
+	void Print(const wchar_t* format, ...)
+	{
+		va_list args;
+		va_start(args, format);
+		Print(format, args);
+		va_end(args);
+	}
+
 	void Print(const char* format, va_list args)
 	{
 		bool to_file = m_file != INVALID_HANDLE_VALUE;
@@ -76,6 +84,37 @@ public:
 			if (to_system) OutputDebugStringA(to_print.c_str());
 			if (to_file) WriteFile(m_file, to_print.c_str(), (DWORD)to_print.size(), &lenout, NULL);
 			printf("%s\n", to_print.c_str());
+		}
+	}
+
+	void Print(const wchar_t* format, va_list args)
+	{
+		bool to_file = m_file != INVALID_HANDLE_VALUE;
+		bool to_system = m_system;
+
+		if ((to_file || to_system) && format)
+		{
+			int outsize = _vscwprintf(format, args) + 1;
+			std::unique_ptr<wchar_t[]> buffer(new wchar_t[outsize]);
+			CharArrayFormatV(buffer.get(), outsize, format, args);
+
+#ifdef LOGGER_DISABLE_TIME
+			std::wstring to_print(buffer.get(), outsize - 1);
+#else
+			std::wstring to_print;
+			std::string time;
+			GetTime(&time);
+			to_print = UTF8ToUTF16(time);
+			to_print.append(buffer.get(), outsize - 1);
+#endif
+
+			to_print.push_back(L'\r');
+			to_print.push_back(L'\n');
+
+			DWORD lenout = 0;
+			if (to_system) OutputDebugStringW(to_print.c_str());
+			if (to_file) WriteFile(m_file, UTF16ToUTF8(to_print).c_str(), (DWORD)to_print.size(), &lenout, NULL);
+			wprintf(L"%s\n", to_print.c_str());
 		}
 	}
 
@@ -117,6 +156,14 @@ inline void LogSystem()
 }
 
 inline void PrintLog(const char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	Logger::Get().Print(format, args);
+	va_end(args);
+}
+
+inline void PrintLog(const wchar_t * format, ...)
 {
 	va_list args;
 	va_start(args, format);

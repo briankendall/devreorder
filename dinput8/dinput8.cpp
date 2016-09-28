@@ -32,7 +32,7 @@ vector<wstring> loadAllKeysFromSectionOfIni(const wstring &section)
 	}
 
 	if (err < 0) {
-		PrintLog("no ini file found");
+		PrintLog("Error: devreorder.ini file found");
 		return result;
 	}
 
@@ -245,11 +245,8 @@ HRESULT STDMETHODCALLTYPE HookEnumDevicesW(LPDIRECTINPUT8W This, DWORD dwDevType
 
 extern "C" HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID *ppvOut, LPUNKNOWN punkOuter)
 {
-	OutputDebugString(L"Calling overridden DirectInput8Create");
-
+	OutputDebugString(L"devreorder: Calling hooked DirectInput8Create");
 	HRESULT hr = DirectInputModuleManager::Get().DirectInput8Create(hinst, dwVersion, riidltf, ppvOut, punkOuter);
-
-	PrintLog("DirectInput8Create");
 
 	if (hr != DI_OK) return hr;
 

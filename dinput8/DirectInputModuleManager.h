@@ -31,13 +31,11 @@ public:
 		}
 
 		if (err >= 0) {
-			PrintLog("Getting chain load");
 			chainLoadFileName = ini.GetValue(L"\0", L"ChainLoadFileName", L"");
-			PrintLog("Result: %s", UTF16ToUTF8(chainLoadFileName).c_str());
 		}
 
 		if (chainLoadFileName.size() > 0) {
-			PrintLog("Using chain load");
+			PrintLog(L"devreorder: chain loading %s", chainLoadFileName.c_str());
 			FullPathFromPath(&loadedModulePath, chainLoadFileName);
 			m_module = LoadLibraryW(loadedModulePath.c_str());
 		} else {
@@ -48,8 +46,13 @@ public:
 			std::wstring systemDirectory = getSystemDirectoryString();
 			std::transform(systemDirectory.begin(), systemDirectory.end(), systemDirectory.begin(), towlower);
 
-			if (modulePath == systemDirectory) {
-				// If we are in system32 then the user needs to have renamed  the original dll to dinput8org.dll:
+			std::wstring dinput8orgPath = systemDirectory;
+			StringPathAppend(&dinput8orgPath, L"dinput8org.dll");
+
+			// If we are in system32 then the user needs to have renamed the original dll to dinput8org.dll
+			// Also if that file exists we should just use that since that way we know we're not loading another
+			// copy of this wrapper DLL
+			if (modulePath == systemDirectory || FileExist(dinput8orgPath)) {
 				m_module = LoadLibrarySystem(L"dinput8org.dll", &loadedModulePath);
 			} else {
 				m_module = LoadLibrarySystem(L"dinput8.dll", &loadedModulePath);

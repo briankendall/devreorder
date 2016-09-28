@@ -161,20 +161,6 @@ bool FullPathFromPath(std::wstring* path, const std::wstring& in_path)
 	return false;
 }
 
-bool StringPathCombine(std::string* dest, const std::string& path, const std::string& more)
-{
-	std::unique_ptr<char[]> buffer(new char[MAX_PATH]);
-	*dest = PathCombineA(buffer.get(), path.c_str(), more.c_str());
-	return !dest->empty();
-}
-
-bool StringPathCombine(std::wstring* dest, const std::wstring& path, const std::wstring& more)
-{
-	std::unique_ptr<wchar_t[]> buffer(new wchar_t[MAX_PATH]);
-	*dest = PathCombineW(buffer.get(), path.c_str(), more.c_str());
-	return !dest->empty();
-}
-
 bool StringPathAppend(std::string* path, const std::string& more)
 {
 	std::unique_ptr<char[]> buffer(new char[MAX_PATH]);
