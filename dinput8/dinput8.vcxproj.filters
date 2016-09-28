@@ -60,16 +60,10 @@
     <ClInclude Include="..\simpleini\SimpleIni.h">
       <Filter>SimpleIni</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\COMDeleter.h">
-      <Filter>common</Filter>
-    </ClInclude>
     <ClInclude Include="..\common\Common.h">
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="..\common\Logger.h">
-      <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\Mutex.h">
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="..\common\NonCopyable.h">
@@ -81,16 +75,10 @@
     <ClInclude Include="..\common\targetver.h">
       <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\Timer.h">
-      <Filter>common</Filter>
-    </ClInclude>
     <ClInclude Include="..\common\Types.h">
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="..\common\Utils.h">
-      <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\WindowsVersion.h">
       <Filter>common</Filter>
     </ClInclude>
   </ItemGroup>
@@ -122,13 +110,7 @@
     <ClCompile Include="..\common\StringUtils.cpp">
       <Filter>common</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\Timer.cpp">
-      <Filter>common</Filter>
-    </ClCompile>
     <ClCompile Include="..\common\Utils.cpp">
-      <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\WindowsVersion.cpp">
       <Filter>common</Filter>
     </ClCompile>
   </ItemGroup>

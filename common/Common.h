@@ -4,12 +4,6 @@
 
 #include "Types.h"
 #include "NonCopyable.h"
-
 #include "Logger.h"
 #include "Utils.h"
-#include "Mutex.h"
 #include "StringUtils.h"
-#include "Timer.h"
-#include "WindowsVersion.h"
-#include "COMDeleter.h"
-

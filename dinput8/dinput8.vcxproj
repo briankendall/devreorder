@@ -170,17 +170,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\common\COMDeleter.h" />
     <ClInclude Include="..\common\Common.h" />
     <ClInclude Include="..\common\Logger.h" />
-    <ClInclude Include="..\common\Mutex.h" />
     <ClInclude Include="..\common\NonCopyable.h" />
     <ClInclude Include="..\common\StringUtils.h" />
     <ClInclude Include="..\common\targetver.h" />
-    <ClInclude Include="..\common\Timer.h" />
     <ClInclude Include="..\common\Types.h" />
     <ClInclude Include="..\common\Utils.h" />
-    <ClInclude Include="..\common\WindowsVersion.h" />
     <ClInclude Include="..\minhook\src\buffer.h" />
     <ClInclude Include="..\minhook\src\hde\hde32.h" />
     <ClInclude Include="..\minhook\src\hde\hde64.h" />
@@ -196,9 +192,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\common\StringUtils.cpp" />
-    <ClCompile Include="..\common\Timer.cpp" />
     <ClCompile Include="..\common\Utils.cpp" />
-    <ClCompile Include="..\common\WindowsVersion.cpp" />
     <ClCompile Include="..\minhook\src\buffer.c" />
     <ClCompile Include="..\minhook\src\hde\hde32.c" />
     <ClCompile Include="..\minhook\src\hde\hde64.c" />
