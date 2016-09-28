@@ -16,11 +16,11 @@
     <Filter Include="InputHook">
       <UniqueIdentifier>{b9809de3-7f60-4981-8a0f-3f76b12796dc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Common">
-      <UniqueIdentifier>{3e8f732c-1826-44d7-af01-9cb7b6eb61e1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="SimpleIni">
       <UniqueIdentifier>{99f7f07a-6fec-4e96-ba34-edc8190952c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common">
+      <UniqueIdentifier>{0b86fc53-c792-4e7a-80e9-424fd2944b6b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -57,41 +57,41 @@
     <ClInclude Include="..\minhook\src\hde\table64.h">
       <Filter>InputHook</Filter>
     </ClInclude>
-    <ClInclude Include="..\x360ce\Common\StringUtils.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\x360ce\Common\targetver.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\x360ce\Common\Timer.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\x360ce\Common\Types.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\x360ce\Common\Utils.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\x360ce\Common\WindowsVersion.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\x360ce\Common\COMDeleter.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\x360ce\Common\Common.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\x360ce\Common\Logger.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\x360ce\Common\Mutex.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\x360ce\Common\NonCopyable.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\simpleini\SimpleIni.h">
       <Filter>SimpleIni</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\COMDeleter.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\Common.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\Logger.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\Mutex.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\NonCopyable.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\StringUtils.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\targetver.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\Timer.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\Types.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\Utils.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WindowsVersion.h">
+      <Filter>common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -119,17 +119,17 @@
     <ClCompile Include="..\minhook\src\hde\hde64.c">
       <Filter>InputHook</Filter>
     </ClCompile>
-    <ClCompile Include="..\x360ce\Common\Timer.cpp">
-      <Filter>Common</Filter>
+    <ClCompile Include="..\common\StringUtils.cpp">
+      <Filter>common</Filter>
     </ClCompile>
-    <ClCompile Include="..\x360ce\Common\Utils.cpp">
-      <Filter>Common</Filter>
+    <ClCompile Include="..\common\Timer.cpp">
+      <Filter>common</Filter>
     </ClCompile>
-    <ClCompile Include="..\x360ce\Common\WindowsVersion.cpp">
-      <Filter>Common</Filter>
+    <ClCompile Include="..\common\Utils.cpp">
+      <Filter>common</Filter>
     </ClCompile>
-    <ClCompile Include="..\x360ce\Common\StringUtils.cpp">
-      <Filter>Common</Filter>
+    <ClCompile Include="..\common\WindowsVersion.cpp">
+      <Filter>common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
