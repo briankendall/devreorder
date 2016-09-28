@@ -27,18 +27,18 @@ Alternatively, if you want to have a single devreorder.ini file that applies to 
 
 If you want to affect the order of controllers for your entire system, that can be accomplished with the following:
 
-0. Create a System Restore Point, just to be safe
-1. Fully quit any applications that make use of DirectInput. (They cannot be running in the system tray.)
-2. Open your system32 directory, usually `C:\Windows\system32`
-3. Take ownership of the file dinput8.dll and change its permissions so that the Administrators group has full control of the file. I'm not going to provide instructions here as you can use your favorite search engine to figure out how to do this. If you're not comfortable taking ownership of a file then you probably shouldn't be tampering with your Windows directory!
-4. Rename dinput8.dll to dinput8org.dll
-5. Copy x64/dinput8.dll from the release directory or release zip file into system32
-6. Open your sysWOW64 directory, usually `C:\Windows\sysWOW64`
-7. Take ownership of dinput8.dll and change its permissions so that the Administrators group has full control
-8. Rename dinput8.dll to dinput8org.dll
-9. Copy x86/dinput8.dll from the release directory or release zip file into system32
-10. Copy devreorder.ini to a folder named devreorder located in your program-data directory, usually C:\ProgramData\devreorder
-11. Edit devreorder.ini as per the instructions in the above section
+1. Create a System Restore Point, just to be safe
+2. Fully quit any applications that make use of DirectInput. (They cannot be running in the system tray.)
+3. Open your system32 directory, usually `C:\Windows\system32`
+4. Take ownership of the file dinput8.dll and change its permissions so that the Administrators group has full control of the file. I'm not going to provide instructions here as you can use your favorite search engine to figure out how to do this. If you're not comfortable taking ownership of a file then you probably shouldn't be tampering with your Windows directory!
+5. Rename dinput8.dll to dinput8org.dll
+6. If your Windows installation is 64-bit, copy x64/dinput8.dll from the release directory or release zip file into system32. If your system is 32-bit, copy x86/dinput8.dll into system32 and skip to step 11.
+7. Open your sysWOW64 directory, usually `C:\Windows\sysWOW64`
+8. Take ownership of dinput8.dll and change its permissions so that the Administrators group has full control
+9. Rename dinput8.dll to dinput8org.dll
+10. Copy x86/dinput8.dll from the release directory or release zip file into system32
+11. Copy devreorder.ini to a folder named devreorder located in your program-data directory, usually C:\ProgramData\devreorder\devreorder.ini
+12. Edit that copy of devreorder.ini as per the instructions in the above section
 
 ## Possible Future work
 
