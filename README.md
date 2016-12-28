@@ -40,6 +40,8 @@ If you want to affect the order of controllers for your entire system, that can 
 11. Copy devreorder.ini to a folder named devreorder located in your program-data directory, usually C:\ProgramData\devreorder\devreorder.ini
 12. Edit that copy of devreorder.ini as per the instructions in the above section
 
+*NB: It is extremely important that you rename the original copy of dinput8.dll to dinput8org.dll. devreorder will specifically look for a dll named that in the system32 / sysWOW64 directory, so if you use a different name than dinput8org.dll, then DirectInput will stop working and your game may crash!*
+
 ## Possible Future work
 
 - A GUI
