@@ -36,7 +36,7 @@ If you want to affect the order of controllers for your entire system, that can 
 7. Open your sysWOW64 directory, usually `C:\Windows\sysWOW64`
 8. Take ownership of dinput8.dll and change its permissions so that the Administrators group has full control
 9. Rename dinput8.dll to dinput8org.dll
-10. Copy x86/dinput8.dll from the release directory or release zip file into system32
+10. Copy x86/dinput8.dll from the release directory or release zip file into sysWOW64
 11. Copy devreorder.ini to a folder named devreorder located in your program-data directory, usually C:\ProgramData\devreorder\devreorder.ini
 12. Edit that copy of devreorder.ini as per the instructions in the above section
 
