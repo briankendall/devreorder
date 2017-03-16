@@ -139,53 +139,40 @@ struct DeviceEnumData {
 	vector<list<T> > sorted;
 };
 
-char *trim(char *str)
+string trim(const string &str)
 {
-	char *end;
+	size_t first = str.find_first_not_of(' ');
 
-	// Trim leading space
-	while (isspace((char)*str)) str++;
+	// string is empty or nothing but whitespace
+	if (string::npos == first) {
+		return string();
+	}
 
-	if (*str == 0) return str;
-
-	// Trim trailing space
-	end = str + strlen(str) - 1;
-	while (end > str && isspace((char)*end)) end--;
-
-	// Write new null terminator
-	*(end + 1) = 0;
-
-	return str;
+	size_t last = str.find_last_not_of(' ');
+	return str.substr(first, (last - first + 1));
 }
 
-WCHAR *trim(WCHAR *str)
+wstring trim(const wstring &str)
 {
-	WCHAR *end;
+	size_t first = str.find_first_not_of(' ');
 
-	// Trim leading space
-	while (isspace((WCHAR)*str)) str++;
+	// string is empty or nothing but whitespace
+	if (wstring::npos == first) {
+		return wstring();
+	}
 
-	if (*str == 0) return str;
-
-	// Trim trailing space
-	end = str + lstrlenW(str) - 1;
-	while (end > str && isspace((WCHAR)*end)) end--;
-
-	// Write new null terminator
-	*(end + 1) = 0;
-
-	return str;
+	size_t last = str.find_last_not_of(' ');
+	return str.substr(first, (last - first + 1));
 }
-
 
 bool stringsAreEqual(const string &a, const char *b)
 {
-	return strcmp(trim((char *)a.c_str()), trim((char *)b)) == 0;
+	return strcmp((char *)trim(a).c_str(), (char *)trim(string(b)).c_str()) == 0;
 }
 
 bool stringsAreEqual(const wstring &a, const WCHAR *b)
 {
-	return lstrcmpW(trim((WCHAR *)a.c_str()), trim((WCHAR *)b)) == 0;
+	return lstrcmpW((WCHAR *)trim(a).c_str(), (WCHAR *)trim(wstring(b)).c_str()) == 0;
 }
 
 template <class DeviceType, class StringType>
@@ -338,14 +325,18 @@ extern "C" HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID
 	IClassFactory *cf;
 	HRESULT hr = DirectInputModuleManager::Get().DllGetClassObject(rclsid, riid, (void**)&cf);
 
-	if (hr != DI_OK) return hr;
+	if (hr != DI_OK) {
+		return hr;
+	}
 
 	*ppv = cf;
 
 	IDirectInput8 *realDI;
 	hr = cf->lpVtbl->CreateInstance(cf, NULL, IID_IDirectInput8, (void**)&realDI);
 
-	if (hr != DI_OK) return hr;
+	if (hr != DI_OK) {
+		return hr;
+	}
 
 	CreateHooks(IID_IDirectInput8, (LPVOID *)&realDI);
 
