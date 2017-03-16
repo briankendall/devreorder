@@ -139,14 +139,40 @@ struct DeviceEnumData {
 	vector<list<T> > sorted;
 };
 
+string trim(const string &str)
+{
+	size_t first = str.find_first_not_of(' ');
+
+	// string is empty or nothing but whitespace
+	if (string::npos == first) {
+		return string();
+	}
+
+	size_t last = str.find_last_not_of(' ');
+	return str.substr(first, (last - first + 1));
+}
+
+wstring trim(const wstring &str)
+{
+	size_t first = str.find_first_not_of(' ');
+
+	// string is empty or nothing but whitespace
+	if (wstring::npos == first) {
+		return wstring();
+	}
+
+	size_t last = str.find_last_not_of(' ');
+	return str.substr(first, (last - first + 1));
+}
+
 bool stringsAreEqual(const string &a, const char *b)
 {
-	return strcmp(a.c_str(), b) == 0;
+	return strcmp((char *)trim(a).c_str(), (char *)trim(string(b)).c_str()) == 0;
 }
 
 bool stringsAreEqual(const wstring &a, const WCHAR *b)
 {
-	return lstrcmpW(a.c_str(), b) == 0;
+	return lstrcmpW((WCHAR *)trim(a).c_str(), (WCHAR *)trim(wstring(b)).c_str()) == 0;
 }
 
 template <class DeviceType, class StringType>
@@ -243,16 +269,11 @@ HRESULT STDMETHODCALLTYPE HookEnumDevicesW(LPDIRECTINPUT8W This, DWORD dwDevType
 	return result;
 }
 
-extern "C" HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID *ppvOut, LPUNKNOWN punkOuter)
+void CreateHooks(REFIID riidltf, LPVOID *realDI)
 {
-	OutputDebugString(L"devreorder: Calling hooked DirectInput8Create");
-	HRESULT hr = DirectInputModuleManager::Get().DirectInput8Create(hinst, dwVersion, riidltf, ppvOut, punkOuter);
-
-	if (hr != DI_OK) return hr;
-
 	if (IsEqualIID(riidltf, IID_IDirectInput8A))
 	{
-		LPDIRECTINPUT8A pDIA = static_cast<LPDIRECTINPUT8A>(*ppvOut);
+		LPDIRECTINPUT8A pDIA = static_cast<LPDIRECTINPUT8A>(*realDI);
 
 		if (pDIA)
 		{
@@ -267,7 +288,7 @@ extern "C" HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, R
 	}
 	else if (IsEqualIID(riidltf, IID_IDirectInput8W))
 	{
-		LPDIRECTINPUT8W pDIW = static_cast<LPDIRECTINPUT8W>(*ppvOut);
+		LPDIRECTINPUT8W pDIW = static_cast<LPDIRECTINPUT8W>(*realDI);
 
 		if (pDIW)
 		{
@@ -280,6 +301,16 @@ extern "C" HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, R
 			}
 		}
 	}
+}
+
+extern "C" HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID *ppvOut, LPUNKNOWN punkOuter)
+{
+	OutputDebugString(L"devreorder: Calling hooked DirectInput8Create");
+	HRESULT hr = DirectInputModuleManager::Get().DirectInput8Create(hinst, dwVersion, riidltf, ppvOut, punkOuter);
+
+	if (hr != DI_OK) return hr;
+
+	CreateHooks(riidltf, ppvOut);
 
 	return hr;
 }
@@ -291,7 +322,25 @@ extern "C" HRESULT WINAPI DllCanUnloadNow(void)
 
 extern "C" HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID FAR* ppv)
 {
-	return DirectInputModuleManager::Get().DllGetClassObject(rclsid, riid, ppv);
+	IClassFactory *cf;
+	HRESULT hr = DirectInputModuleManager::Get().DllGetClassObject(rclsid, riid, (void**)&cf);
+
+	if (hr != DI_OK) {
+		return hr;
+	}
+
+	*ppv = cf;
+
+	IDirectInput8 *realDI;
+	hr = cf->lpVtbl->CreateInstance(cf, NULL, IID_IDirectInput8, (void**)&realDI);
+
+	if (hr != DI_OK) {
+		return hr;
+	}
+
+	CreateHooks(IID_IDirectInput8, (LPVOID *)&realDI);
+
+	return hr;
 }
 
 extern "C" HRESULT WINAPI DllRegisterServer(void)
