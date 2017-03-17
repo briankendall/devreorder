@@ -9,9 +9,7 @@ Tested in Windows 8.1, but should in theory work in any version of Windows. Note
 
 ## How to use:
 
-### Apply to single game or program:
-
-NOTE: This method of using devreorder will not work for games that initialize DirectInput via the COM interface. If you follow these directions to apply devreorder to a single game and it is not having any effect, it is likely that the game is accessing the DirectInput COM interface. In that case, you will need to follow the directions in the next section to apply devreorder to your entire system.
+### Apply to single game or program
 
 In the release zip file, or in the release directory if you cloned the repo, there is an x86 and x64 folder, each containing dinput8.dll. Depending on whether the game is 32-bit or 64-bit copy dinput8.dll in x86 or x64 respectively to the same folder containing the game's .exe file.
 
@@ -21,11 +19,11 @@ Any controllers listed in the `[order]` section will always be sorted ahead of a
 
 You need to type in their name exactly as it appears in the Game Controllers control panel, matching any punctuation, spaces, and capital letters. To open the Game Controllers control panel, type Win+R, type joy.cpl into the dialog box that appears, and then press enter. It will list any controllers that you currently have connected to your system in the order that they will appear to most games that use DirectInput.
 
-Alternatively, if you want to have a single devreorder.ini file that applies to all games, copy it to `C:\ProgramData\devreorder\devreorder.ini` (or wherever. your program-data folder is) The wrapper DLL will always check the game's current directory for devreorder.ini and, failing that, then check `C:\ProgramData\devreorder\devreorder.ini` so you can always change the settings on a per-game basis if you prefer.
+Alternatively, if you want to have a single devreorder.ini file that applies to all games, copy it to `C:\ProgramData\devreorder\devreorder.ini` (or wherever. your program-data folder is) The wrapper DLL will always check the game's current directory for devreorder.ini and, failing that, then check `C:\ProgramData\devreorder\devreorder.ini` so you can always change the settings on a per-game basis if you prefer.:
+
+**NOTE:** This method of using devreorder will not work for games that initialize DirectInput via the COM interface. If you follow these directions to apply devreorder to a single game and it is not having any effect, it is likely that the game is accessing the DirectInput COM interface. In that case, you will need to follow the directions in the next section to apply devreorder to your entire system.
 
 ### Apply to your entire system
-
-NOTE: As stated above, if a game is initializing DirectInput via the COM interface, you will need to follow this method for applying devreorder to your entire system.
 
 (Warning! The following method involves changing DLL files in your Windows directory. Do not use this method unless you are comfortable making potentially breaking changes to your system and you understand the consequences, including the security implications. Proceed at your own peril!)
 
