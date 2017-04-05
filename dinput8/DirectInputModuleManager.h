@@ -24,6 +24,7 @@ public:
 		ini.SetAllowEmptyValues(false);
 		std::wstring inipath(L"devreorder.ini");
 		SI_Error err = ini.LoadFile(inipath.c_str());
+		LogSystem();
 
 		if (err < 0) {
 			CheckCommonDirectory(&inipath, L"devreorder");
@@ -69,7 +70,7 @@ public:
 		}
 		else
 		{
-			PrintLog("Loaded \"%s\"", UTF16ToUTF8(loadedModulePath).c_str());
+			PrintLog("devreorder: Loaded \"%s\"", UTF16ToUTF8(loadedModulePath).c_str());
 		}
 
 		GetProcAddress("DirectInput8Create", &DirectInput8Create);
@@ -85,7 +86,7 @@ public:
 		{
 			std::string xinput_path;
 			ModulePath(&xinput_path, m_module);
-			PrintLog("Unloading %s", xinput_path.c_str());
+			PrintLog("devreorder: Unloading %s", xinput_path.c_str());
 			FreeLibrary(m_module);
 		}
 	}

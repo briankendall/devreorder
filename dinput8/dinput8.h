@@ -27,13 +27,13 @@ void IH_CreateHookF(LPVOID pTarget, LPVOID pDetour, N* ppOriginal, const char* p
 {
 	if (*ppOriginal) return;
 	MH_STATUS status = MH_CreateHook(pTarget, pDetour, reinterpret_cast<void**>(ppOriginal));
-	PrintLog("CreateHook %s status %s", pTargetName, MH_StatusToString(status));
+	PrintLog("devreorder: CreateHook %s status %s", pTargetName, MH_StatusToString(status));
 }
 
 inline void IH_EnableHookF(LPVOID pTarget, const char* pTargetName)
 {
 	MH_STATUS status = MH_EnableHook(pTarget);
-	PrintLog("EnableHook %s status %s", pTargetName, MH_StatusToString(status));
+	PrintLog("devreorder: EnableHook %s status %s", pTargetName, MH_StatusToString(status));
 }
 
 #define IH_CreateHook(pTarget, pDetour, ppOrgiginal) IH_CreateHookF(pTarget, pDetour, ppOrgiginal, #pTarget)

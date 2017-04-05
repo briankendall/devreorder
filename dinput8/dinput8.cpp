@@ -29,11 +29,15 @@ vector<wstring> loadAllKeysFromSectionOfIni(const wstring &section)
 	if (err < 0) {
 		CheckCommonDirectory(&inipath, L"devreorder");
 		err = ini.LoadFile(inipath.c_str());
-	}
 
-	if (err < 0) {
-		PrintLog("Error: devreorder.ini file found");
-		return result;
+		if (err < 0) {
+			PrintLog("devreorder error: devreorder.ini file found");
+			return result;
+		} else {
+			PrintLog("devreorder: using system-wide devreorder.ini");
+		}
+	} else {
+		PrintLog("devreorder: using program-specific devreorder.ini");
 	}
 
 	CSimpleIniW::TNamesDepend keys;
@@ -78,18 +82,6 @@ vector<string> & sortedControllersA()
 	return result;
 }
 
-vector<string> & sortedControllers(const string &ignored)
-{
-	(void)ignored;
-	return sortedControllersA();
-}
-
-vector<wstring> & sortedControllers(const wstring &ignored)
-{
-	(void)ignored;
-	return sortedControllersW();
-}
-
 vector<wstring> & hiddenControllersW()
 {
 	static vector<wstring> result;
@@ -119,18 +111,6 @@ vector<string> & hiddenControllersA()
 	}
 
 	return result;
-}
-
-vector<string> & hiddenControllers(const string &ignored)
-{
-	(void)ignored;
-	return hiddenControllersA();
-}
-
-vector<wstring> & hiddenControllers(const wstring &ignored)
-{
-	(void)ignored;
-	return hiddenControllersW();
 }
 
 template <class T>
@@ -175,38 +155,56 @@ bool stringsAreEqual(const wstring &a, const WCHAR *b)
 	return lstrcmpW((WCHAR *)trim(a).c_str(), (WCHAR *)trim(wstring(b)).c_str()) == 0;
 }
 
-template <class DeviceType, class StringType>
-bool enumCallback(const DeviceType *deviceInstance, LPVOID userData)
+BOOL CALLBACK enumCallbackA(LPCDIDEVICEINSTANCEA deviceInstance, LPVOID userData)
 {
-	DeviceEnumData<DeviceType> *enumData = (DeviceEnumData<DeviceType> *)userData;
-	vector<StringType> &order = sortedControllers(StringType());
-	vector<StringType> &hidden = hiddenControllers(StringType());
+	DeviceEnumData<DIDEVICEINSTANCEA> *enumData = (DeviceEnumData<DIDEVICEINSTANCEA> *)userData;
+	vector<string> &order = sortedControllersA();
+	vector<string> &hidden = hiddenControllersA();
 
 	for (unsigned int i = 0; i < hidden.size(); ++i) {
 		if (stringsAreEqual(hidden[i], deviceInstance->tszProductName)) {
+			PrintLog("devreorder: product \"%s\" is hidden", deviceInstance->tszProductName);
 			return DIENUM_CONTINUE;
 		}
 	}
 
 	for (unsigned int i = 0; i < order.size(); ++i) {
 		if (stringsAreEqual(order[i], deviceInstance->tszProductName)) {
+			PrintLog("devreorder: product \"%s\" is sorted up", deviceInstance->tszProductName);
 			enumData->sorted[i].push_back(*deviceInstance);
 			return DIENUM_CONTINUE;
 		}
 	}
 
+	PrintLog("devreorder: product \"%s\" is not sorted differently", deviceInstance->tszProductName);
 	enumData->nonsorted.push_back(*deviceInstance);
 	return DIENUM_CONTINUE;
 }
 
-BOOL CALLBACK enumCallbackA(LPCDIDEVICEINSTANCEA deviceInstance, LPVOID userData)
-{
-	return enumCallback<DIDEVICEINSTANCEA, string>(deviceInstance, userData);
-}
-
 BOOL CALLBACK enumCallbackW(LPCDIDEVICEINSTANCEW deviceInstance, LPVOID userData)
 {
-	return enumCallback<DIDEVICEINSTANCEW, wstring>(deviceInstance, userData);
+	DeviceEnumData<DIDEVICEINSTANCEW> *enumData = (DeviceEnumData<DIDEVICEINSTANCEW> *)userData;
+	vector<wstring> &order = sortedControllersW();
+	vector<wstring> &hidden = hiddenControllersW();
+
+	for (unsigned int i = 0; i < hidden.size(); ++i) {
+		if (stringsAreEqual(hidden[i], deviceInstance->tszProductName)) {
+			PrintLog(L"devreorder: product \"%s\" is hidden", deviceInstance->tszProductName);
+			return DIENUM_CONTINUE;
+		}
+	}
+
+	for (unsigned int i = 0; i < order.size(); ++i) {
+		if (stringsAreEqual(order[i], deviceInstance->tszProductName)) {
+			PrintLog(L"devreorder: product \"%s\" is sorted up", deviceInstance->tszProductName);
+			enumData->sorted[i].push_back(*deviceInstance);
+			return DIENUM_CONTINUE;
+		}
+	}
+
+	PrintLog(L"devreorder: product \"%s\" is not sorted differently", deviceInstance->tszProductName);
+	enumData->nonsorted.push_back(*deviceInstance);
+	return DIENUM_CONTINUE;
 }
 
 HRESULT STDMETHODCALLTYPE HookEnumDevicesA(LPDIRECTINPUT8A This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags)
@@ -216,6 +214,7 @@ HRESULT STDMETHODCALLTYPE HookEnumDevicesA(LPDIRECTINPUT8A This, DWORD dwDevType
 
 	enumData.sorted.resize(order.size());
 
+	PrintLog("devreorder: determining new sorting order for devices");
 	HRESULT result = TrueEnumDevicesA(This, dwDevType, enumCallbackA, (LPVOID)&enumData, dwFlags);
 
 	if (result != DI_OK) {
@@ -246,6 +245,7 @@ HRESULT STDMETHODCALLTYPE HookEnumDevicesW(LPDIRECTINPUT8W This, DWORD dwDevType
 
 	enumData.sorted.resize(order.size());
 
+	PrintLog("devreorder: determining new sorting order for devices");
 	HRESULT result = TrueEnumDevicesW(This, dwDevType, enumCallbackW, (LPVOID)&enumData, dwFlags);
 
 	if (result != DI_OK) {
@@ -277,7 +277,7 @@ void CreateHooks(REFIID riidltf, LPVOID *realDI)
 
 		if (pDIA)
 		{
-			PrintLog("DirectInput8Create - ANSI interface");
+			PrintLog("devreorder: using ANSI interface");
 			if (pDIA->lpVtbl->EnumDevices)
 			{
 				EnumDevicesA = pDIA->lpVtbl->EnumDevices;
@@ -292,7 +292,7 @@ void CreateHooks(REFIID riidltf, LPVOID *realDI)
 
 		if (pDIW)
 		{
-			PrintLog("DirectInput8Create - UNICODE interface");
+			PrintLog("devreorder: using UNICODE interface");
 			if (pDIW->lpVtbl->EnumDevices)
 			{
 				EnumDevicesW = pDIW->lpVtbl->EnumDevices;
@@ -305,7 +305,7 @@ void CreateHooks(REFIID riidltf, LPVOID *realDI)
 
 extern "C" HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID *ppvOut, LPUNKNOWN punkOuter)
 {
-	OutputDebugString(L"devreorder: Calling hooked DirectInput8Create");
+	PrintLog("devreorder: Calling hooked DirectInput8Create");
 	HRESULT hr = DirectInputModuleManager::Get().DirectInput8Create(hinst, dwVersion, riidltf, ppvOut, punkOuter);
 
 	if (hr != DI_OK) return hr;
@@ -322,6 +322,7 @@ extern "C" HRESULT WINAPI DllCanUnloadNow(void)
 
 extern "C" HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID FAR* ppv)
 {
+	PrintLog("devreorder: Calling hooked DllGetClassObject");
 	IClassFactory *cf;
 	HRESULT hr = DirectInputModuleManager::Get().DllGetClassObject(rclsid, riid, (void**)&cf);
 
