@@ -5,7 +5,6 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.DirectX.DirectInput;
 
@@ -18,7 +17,7 @@ namespace DeviceLister
             InitializeComponent();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void DeviceListerForm_Load(object sender, EventArgs e)
         {
             string deviceData = "";
 
@@ -29,11 +28,6 @@ namespace DeviceLister
 
             textBox.Text = deviceData;
             textBox.Select(0, 0);
-        }
-
-        private void textBox_TextChanged(object sender, EventArgs e)
-        {
-
         }
     }
 }

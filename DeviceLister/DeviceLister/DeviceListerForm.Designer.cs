@@ -54,7 +54,6 @@
             this.textBox.Size = new System.Drawing.Size(471, 267);
             this.textBox.TabIndex = 1;
             this.textBox.WordWrap = false;
-            this.textBox.TextChanged += new System.EventHandler(this.textBox_TextChanged);
             // 
             // DeviceListerForm
             // 
@@ -65,7 +64,7 @@
             this.Controls.Add(this.label1);
             this.Name = "DeviceListerForm";
             this.Text = "Device Lister";
-            this.Load += new System.EventHandler(this.Form1_Load);
+            this.Load += new System.EventHandler(this.DeviceListerForm_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 
