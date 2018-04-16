@@ -13,6 +13,12 @@
 
 using namespace std;
 
+enum MatchType {
+	kNoMatch,
+	kNameMatch,
+	kGUIDMatch
+};
+
 HRESULT(STDMETHODCALLTYPE *TrueEnumDevicesA) (LPDIRECTINPUT8A This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags) = nullptr;
 HRESULT(STDMETHODCALLTYPE *TrueEnumDevicesW) (LPDIRECTINPUT8W This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags) = nullptr;
 HRESULT(STDMETHODCALLTYPE *EnumDevicesA) (LPDIRECTINPUT8A This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags) = nullptr;
@@ -145,14 +151,75 @@ wstring trim(const wstring &str)
 	return str.substr(first, (last - first + 1));
 }
 
-bool stringsAreEqual(const string &a, const char *b)
+string toLower(const string &str)
 {
-	return strcmp((char *)trim(a).c_str(), (char *)trim(string(b)).c_str()) == 0;
+	string result = str;
+	transform(result.begin(), result.end(), result.begin(), ::tolower);
+	return result;
 }
 
-bool stringsAreEqual(const wstring &a, const WCHAR *b)
+wstring toLower(const wstring &str)
 {
-	return lstrcmpW((WCHAR *)trim(a).c_str(), (WCHAR *)trim(wstring(b)).c_str()) == 0;
+	wstring result = str;
+	transform(result.begin(), result.end(), result.begin(), ::tolower);
+	return result;
+}
+
+string GUIDToString(const GUID &guid)
+{
+	CHAR result[40];
+	sprintf_s(result, 40, "{%08lx-%04hx-%04hx-%02hhx%02hhx-%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx}",
+		      guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2],
+		      guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
+	return string(result);
+}
+
+wstring GUIDToWString(const GUID &guid)
+{
+	WCHAR result[40];
+	swprintf_s(result, 40, L"{%08lx-%04hx-%04hx-%02hhx%02hhx-%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx}",
+		       guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2],
+		       guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
+	return wstring(result);
+}
+
+MatchType deviceMatchesEntry(LPCDIDEVICEINSTANCEA deviceInstance, const string &entry)
+{
+	string trimmedEntry = trim(entry);
+	string deviceIdentifier;
+
+	if (entry.length() == 0) {
+		return kNoMatch;
+	}
+
+	if (entry[0] == '{') {
+		deviceIdentifier = GUIDToString(deviceInstance->guidInstance);
+		trimmedEntry = toLower(trimmedEntry);
+		return (deviceIdentifier == trimmedEntry) ? kGUIDMatch : kNoMatch;
+	} else {
+		deviceIdentifier = trim(deviceInstance->tszProductName);
+		return (deviceIdentifier == trimmedEntry) ? kNameMatch : kNoMatch;
+	}
+
+}
+
+MatchType deviceMatchesEntry(LPCDIDEVICEINSTANCEW deviceInstance, const wstring &entry)
+{
+	wstring trimmedEntry = trim(entry);
+	wstring deviceIdentifier;
+
+	if (entry.length() == 0) {
+		return kNoMatch;
+	}
+
+	if (entry[0] == '{') {
+		deviceIdentifier = GUIDToWString(deviceInstance->guidInstance);
+		trimmedEntry = toLower(trimmedEntry);
+		return (deviceIdentifier == trimmedEntry) ? kGUIDMatch : kNoMatch;
+	} else {
+		deviceIdentifier = trim(deviceInstance->tszProductName);
+		return (deviceIdentifier == trimmedEntry) ? kNameMatch : kNoMatch;
+	}
 }
 
 BOOL CALLBACK enumCallbackA(LPCDIDEVICEINSTANCEA deviceInstance, LPVOID userData)
@@ -162,18 +229,31 @@ BOOL CALLBACK enumCallbackA(LPCDIDEVICEINSTANCEA deviceInstance, LPVOID userData
 	vector<string> &hidden = hiddenControllersA();
 
 	for (unsigned int i = 0; i < hidden.size(); ++i) {
-		if (stringsAreEqual(hidden[i], deviceInstance->tszProductName)) {
+		if (deviceMatchesEntry(deviceInstance, hidden[i])) {
 			PrintLog("devreorder: product \"%s\" is hidden", deviceInstance->tszProductName);
 			return DIENUM_CONTINUE;
 		}
 	}
+	
+	int nameMatchIndex = -1;
 
 	for (unsigned int i = 0; i < order.size(); ++i) {
-		if (stringsAreEqual(order[i], deviceInstance->tszProductName)) {
-			PrintLog("devreorder: product \"%s\" is sorted up", deviceInstance->tszProductName);
+		MatchType match = deviceMatchesEntry(deviceInstance, order[i]);
+
+		// Important that we prioritize a match via GUID over a match via name
+		if (match == kGUIDMatch) {
+			PrintLog("devreorder: product \"%s\" is sorted up by GUID", deviceInstance->tszProductName);
 			enumData->sorted[i].push_back(*deviceInstance);
 			return DIENUM_CONTINUE;
+		} else if (match == kNameMatch) {
+			nameMatchIndex = i;
 		}
+	}
+
+	if (nameMatchIndex != -1) {
+		PrintLog("devreorder: product \"%s\" is sorted up by name", deviceInstance->tszProductName);
+		enumData->sorted[nameMatchIndex].push_back(*deviceInstance);
+		return DIENUM_CONTINUE;
 	}
 
 	PrintLog("devreorder: product \"%s\" is not sorted differently", deviceInstance->tszProductName);
@@ -188,18 +268,31 @@ BOOL CALLBACK enumCallbackW(LPCDIDEVICEINSTANCEW deviceInstance, LPVOID userData
 	vector<wstring> &hidden = hiddenControllersW();
 
 	for (unsigned int i = 0; i < hidden.size(); ++i) {
-		if (stringsAreEqual(hidden[i], deviceInstance->tszProductName)) {
+		if (deviceMatchesEntry(deviceInstance, hidden[i])) {
 			PrintLog(L"devreorder: product \"%s\" is hidden", deviceInstance->tszProductName);
 			return DIENUM_CONTINUE;
 		}
 	}
+	
+	int nameMatchIndex = -1;
 
 	for (unsigned int i = 0; i < order.size(); ++i) {
-		if (stringsAreEqual(order[i], deviceInstance->tszProductName)) {
-			PrintLog(L"devreorder: product \"%s\" is sorted up", deviceInstance->tszProductName);
+		MatchType match = deviceMatchesEntry(deviceInstance, order[i]);
+
+		// Important that we prioritize a match via GUID over a match via name
+		if (match == kGUIDMatch) {
+			PrintLog(L"devreorder: product \"%s\" is sorted up by GUID", deviceInstance->tszProductName);
 			enumData->sorted[i].push_back(*deviceInstance);
 			return DIENUM_CONTINUE;
+		} else if (match == kNameMatch) {
+			nameMatchIndex = i;
 		}
+	}
+
+	if (nameMatchIndex != -1) {
+		PrintLog(L"devreorder: product \"%s\" is sorted up by name", deviceInstance->tszProductName);
+		enumData->sorted[nameMatchIndex].push_back(*deviceInstance);
+		return DIENUM_CONTINUE;
 	}
 
 	PrintLog(L"devreorder: product \"%s\" is not sorted differently", deviceInstance->tszProductName);

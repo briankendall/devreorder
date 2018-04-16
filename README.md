@@ -15,13 +15,19 @@ In the release zip file, or in the release directory if you cloned the repo, the
 
 Also copy devreorder.ini and edit it so that its `[order]` section contains a list of controllers in the order that you want them to appear, and the `[hidden]` section contains a list of controllers you want to be hidden.
 
-Any controllers listed in the `[order]` section will always be sorted ahead of any controller not listed in this section. Controllers with the same name will be grouped together, though their relative other between each other will remain the same.
+Any controllers listed in the `[order]` section will always be sorted ahead of any controller not listed in this section. Controllers with the same name will be grouped together, though their relative other between each other will remain the same. You may also use the *instance GUID* of a particular device in case you need to change the order of devices that have the same name.
 
-You need to type in their name exactly as it appears in the Game Controllers control panel, matching any punctuation, spaces, and capital letters. To open the Game Controllers control panel, type Win+R, type joy.cpl into the dialog box that appears, and then press enter. It will list any controllers that you currently have connected to your system in the order that they will appear to most games that use DirectInput.
+When specifying names, you need to have it match exactly as it appears in the Game Controllers control panel or the included DeviceLister program, matching any punctuation, spaces, and capital letters. To open the Game Controllers control panel, type Win+R, type joy.cpl into the dialog box that appears, and then press enter. It will list any controllers that you currently have connected to your system in the order that they will appear to most games that use DirectInput. The DeviceLister application can also be used for this, and allows selecting the text so that it can be copied and pasted, probably making it a better, more convenient option.
 
-Alternatively, if you want to have a single devreorder.ini file that applies to all games, copy it to `C:\ProgramData\devreorder\devreorder.ini` (or wherever. your program-data folder is) The wrapper DLL will always check the game's current directory for devreorder.ini and, failing that, then check `C:\ProgramData\devreorder\devreorder.ini` so you can always change the settings on a per-game basis if you prefer.:
+You can also use DeviceLister.exe to find the GUIDs of each of your connected devices. You can use a GUID instead of a device name in either the `[order]` or `[hidden]` section if you need to specify a specific controller when multiple controllers have the same name. GUIDs may also work better in cases where devreorder doesn't match a controller by name for some reason (such as a bug). The GUID must be enclosed in curly braces and match the format in DeviceLister.exe, e.g. `{01234567-89ab-cdef-0123-456789abcdef}` Unfortunately, when there's more than one device with the same name, DeviceLister currently doesn't have a convenient way of determining which listing corresponds to which physical device. However, the order it uses *should* be the same as in the Game Controllers control panel, and that can display which buttons on a particular device are pressed, so you can use that to help figure out which GUID corresponds with which device. (I hope to improve this situation in the future.)
 
-**NOTE:** This method of using devreorder will not work for games that initialize DirectInput via the COM interface. If you follow these directions to apply devreorder to a single game and it is not having any effect, it is likely that the game is accessing the DirectInput COM interface. In that case, you will need to follow the directions in the next section to apply devreorder to your entire system.
+Please note that while these GUIDs are supposed to remain consistent for any one device, they are specific to a particular Windows installation and are therefore not transferable to another system. Also, people have reported that due to bugs in Windows, the GUIDs might be different between different user accounts. In that case you can specify all of the GUIDs that Windows reports for a particular device to ensure it's sorted or hidden consistently.
+
+**NOTE:** This method of using devreorder will not work for games that initialize DirectInput via the COM interface. If you follow these directions to apply devreorder to a single game and it is not having any effect, it is likely that the game is accessing the DirectInput COM interface. In that case, you will need to follow the directions in the [Apply to your entire system](#apply-to-your-entire-system) section.
+
+### Use one settings file for all games
+
+If you want to have a single devreorder.ini file that applies to all games, copy it to `C:\ProgramData\devreorder\devreorder.ini` (or wherever. your program-data folder is) The wrapper DLL will always check the game's current directory for devreorder.ini and, failing that, then check `C:\ProgramData\devreorder\devreorder.ini` so you can always change the settings on a per-game basis if you prefer.:
 
 ### Apply to your entire system
 
@@ -40,13 +46,13 @@ If you want to affect the order of controllers for your entire system, that can 
 9. Rename dinput8.dll to dinput8org.dll
 10. Copy x86/dinput8.dll from the release directory or release zip file into sysWOW64
 11. Copy devreorder.ini to a folder named devreorder located in your program-data directory, usually C:\ProgramData\devreorder\devreorder.ini
-12. Edit that copy of devreorder.ini as per the instructions in the above section
+12. Edit that copy of devreorder.ini as per the instructions in the above sections
 
 *NB: It is extremely important that you rename the original copy of dinput8.dll to dinput8org.dll. devreorder will specifically look for a dll named that in the system32 / sysWOW64 directory, so if you use a different name than dinput8org.dll, then DirectInput will stop working and your game may crash!*
 
 ## Possible Future work
 
-- A GUI
+- A GUI that streamlines installing the devreorder DLLs, and allows just dragging controllers into the order you want. (Wouldn't that be nice!)
 - Wrap other game input APIs
 
 I make no guarantees that I will ever get around to implementing any of these!
