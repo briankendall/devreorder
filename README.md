@@ -50,7 +50,11 @@ If you want to affect the order of controllers for your entire system, that can 
 
 *NB: It is extremely important that you rename the original copy of dinput8.dll to dinput8org.dll. devreorder will specifically look for a dll named that in the system32 / sysWOW64 directory, so if you use a different name than dinput8org.dll, then DirectInput will stop working and your game may crash!*
 
-## Possible Future work
+## Antivirus false positives
+
+It's been reported to me that some antivirus software may flag devreorder's versions of dinput8.dll as a virus or other kind of malware. These are false positives. If this happens to you then you will need to configure your antivirus software to whitelist these files so that it doesn't prevent devreorder from working.
+
+## Possible future work
 
 - A GUI that streamlines installing the devreorder DLLs, and allows just dragging controllers into the order you want. (Wouldn't that be nice!)
 - Wrap other game input APIs
