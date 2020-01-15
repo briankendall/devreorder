@@ -25,6 +25,8 @@ Please note that while these GUIDs are supposed to remain consistent for any one
 
 **NOTE:** This method of using devreorder will not work for games that initialize DirectInput via the COM interface. If you follow these directions to apply devreorder to a single game and it is not having any effect, it is likely that the game is accessing the DirectInput COM interface. In that case, you will need to follow the directions in the [Apply to your entire system](#apply-to-your-entire-system) section.
 
+**NOTE #2:** If you get an error when running DeviceLister.exe that says something like `System.IO.FileNotFoundException: Could not load file or assembly 'Microsoft.DirectX.DirectInput'` then you probably need to install the DirectX 9 runtime. [Here's a link to Microsoft's installer.](https://www.microsoft.com/en-us/download/details.aspx?id=8109)
+
 ### Use one settings file for all games
 
 If you want to have a single devreorder.ini file that applies to all games, copy it to `C:\ProgramData\devreorder\devreorder.ini` (or wherever. your program-data folder is) The wrapper DLL will always check the game's current directory for devreorder.ini and, failing that, then check `C:\ProgramData\devreorder\devreorder.ini` so you can always change the settings on a per-game basis if you prefer.:
