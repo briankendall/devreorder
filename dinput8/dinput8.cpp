@@ -119,6 +119,37 @@ vector<string> & hiddenControllersA()
 	return result;
 }
 
+vector<wstring> & visibleControllersW()
+{
+	static vector<wstring> result;
+	static bool needToInitialize = true;
+
+	if (needToInitialize) {
+		result = loadAllKeysFromSectionOfIni(L"visible");
+		needToInitialize = false;
+	}
+
+	return result;
+}
+
+vector<string> & visibleControllersA()
+{
+	static vector<string> result;
+	static bool needToInitialize = true;
+
+	if (needToInitialize) {
+		vector<wstring> &wideList = visibleControllersW();
+
+		for (unsigned int i = 0; i < wideList.size(); ++i) {
+			result.push_back(UTF16ToUTF8(wideList[i]));
+		}
+
+		needToInitialize = false;
+	}
+
+	return result;
+}
+
 vector<wstring> & ignoredProcessesW()
 {
 	static vector<wstring> result;
@@ -287,6 +318,7 @@ BOOL CALLBACK enumCallbackA(LPCDIDEVICEINSTANCEA deviceInstance, LPVOID userData
 	DeviceEnumData<DIDEVICEINSTANCEA> *enumData = (DeviceEnumData<DIDEVICEINSTANCEA> *)userData;
 	vector<string> &order = sortedControllersA();
 	vector<string> &hidden = hiddenControllersA();
+	vector<string> &visible = visibleControllersA();
 
 	for (unsigned int i = 0; i < hidden.size(); ++i) {
 		if (deviceMatchesEntry(deviceInstance, hidden[i])) {
@@ -294,7 +326,25 @@ BOOL CALLBACK enumCallbackA(LPCDIDEVICEINSTANCEA deviceInstance, LPVOID userData
 			return DIENUM_CONTINUE;
 		}
 	}
-	
+
+	DWORD deviceType = GET_DIDEVICE_TYPE(deviceInstance->dwDevType);
+
+	if (visible.size() > 0 && deviceType != DI8DEVTYPE_KEYBOARD && deviceType != DI8DEVTYPE_MOUSE
+		&& deviceType != DI8DEVTYPE_SCREENPOINTER) {
+		bool isVisible = false;
+
+		for (unsigned int i = 0; i < visible.size(); ++i) {
+			if (deviceMatchesEntry(deviceInstance, visible[i])) {
+				isVisible = true;
+			}
+		}
+
+		if (!isVisible) {
+			PrintLog("devreorder: product \"%s\" is not in visible section", deviceInstance->tszProductName);
+			return DIENUM_CONTINUE;
+		}
+	}
+
 	int nameMatchIndex = -1;
 
 	for (unsigned int i = 0; i < order.size(); ++i) {
@@ -327,10 +377,29 @@ BOOL CALLBACK enumCallbackW(LPCDIDEVICEINSTANCEW deviceInstance, LPVOID userData
 	DeviceEnumData<DIDEVICEINSTANCEW> *enumData = (DeviceEnumData<DIDEVICEINSTANCEW> *)userData;
 	vector<wstring> &order = sortedControllersW();
 	vector<wstring> &hidden = hiddenControllersW();
+	vector<wstring> &visible = visibleControllersW();
 
 	for (unsigned int i = 0; i < hidden.size(); ++i) {
 		if (deviceMatchesEntry(deviceInstance, hidden[i])) {
 			PrintLog(L"devreorder: product \"%s\" is hidden", deviceInstance->tszProductName);
+			return DIENUM_CONTINUE;
+		}
+	}
+
+	DWORD deviceType = GET_DIDEVICE_TYPE(deviceInstance->dwDevType);
+
+	if (visible.size() > 0 && deviceType != DI8DEVTYPE_KEYBOARD && deviceType != DI8DEVTYPE_MOUSE
+		&& deviceType != DI8DEVTYPE_SCREENPOINTER) {
+		bool isVisible = false;
+
+		for (unsigned int i = 0; i < visible.size(); ++i) {
+			if (deviceMatchesEntry(deviceInstance, visible[i])) {
+				isVisible = true;
+			}
+		}
+
+		if (!isVisible) {
+			PrintLog(L"devreorder: product \"%s\" is not in visible section", deviceInstance->tszProductName);
 			return DIENUM_CONTINUE;
 		}
 	}
