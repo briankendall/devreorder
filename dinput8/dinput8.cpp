@@ -119,6 +119,37 @@ vector<string> & hiddenControllersA()
 	return result;
 }
 
+vector<wstring> & ignoredProcessesW()
+{
+	static vector<wstring> result;
+	static bool needToInitialize = true;
+
+	if (needToInitialize) {
+		result = loadAllKeysFromSectionOfIni(L"ignored processes");
+		needToInitialize = false;
+	}
+
+	return result;
+}
+
+vector<string> & ignoredProcessesA()
+{
+	static vector<string> result;
+	static bool needToInitialize = true;
+
+	if (needToInitialize) {
+		vector<wstring> &wideList = ignoredProcessesW();
+
+		for (unsigned int i = 0; i < wideList.size(); ++i) {
+			result.push_back(UTF16ToUTF8(wideList[i]));
+		}
+
+		needToInitialize = false;
+	}
+
+	return result;
+}
+
 template <class T>
 struct DeviceEnumData {
 	list<T> nonsorted;
@@ -181,6 +212,35 @@ wstring GUIDToWString(const GUID &guid)
 		       guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2],
 		       guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
 	return wstring(result);
+}
+
+bool currentProcessIsIgnored()
+{
+	WCHAR currentProcessPathCStr[MAX_PATH];
+	DWORD size = GetModuleFileName(NULL, currentProcessPathCStr, MAX_PATH);
+	wstring processFileName = currentProcessPathCStr;
+	const size_t lastSlashIndex = processFileName.find_last_of(L"\\/");
+
+	if (lastSlashIndex != std::string::npos) {
+		processFileName.erase(0, lastSlashIndex + 1);
+	}
+
+	processFileName = trim(toLower(processFileName));
+	PrintLog(L"Current process name: %s", processFileName.c_str());
+
+	std::vector<wstring> ignored = ignoredProcessesW();
+
+	PrintLog(L"Ignored list:");
+	for (auto it = ignored.begin(); it != ignored.end(); ++it) {
+		PrintLog(L" - %s", it->c_str());
+
+		if (trim(toLower(*it)) == processFileName) {
+			PrintLog(L"   found match!");
+			return true;
+		}
+	}
+
+	return false;
 }
 
 MatchType deviceMatchesEntry(LPCDIDEVICEINSTANCEA deviceInstance, const string &entry)
@@ -263,6 +323,7 @@ BOOL CALLBACK enumCallbackA(LPCDIDEVICEINSTANCEA deviceInstance, LPVOID userData
 
 BOOL CALLBACK enumCallbackW(LPCDIDEVICEINSTANCEW deviceInstance, LPVOID userData)
 {
+
 	DeviceEnumData<DIDEVICEINSTANCEW> *enumData = (DeviceEnumData<DIDEVICEINSTANCEW> *)userData;
 	vector<wstring> &order = sortedControllersW();
 	vector<wstring> &hidden = hiddenControllersW();
@@ -364,6 +425,13 @@ HRESULT STDMETHODCALLTYPE HookEnumDevicesW(LPDIRECTINPUT8W This, DWORD dwDevType
 
 void CreateHooks(REFIID riidltf, LPVOID *realDI)
 {
+	PrintLog("devreorder: in CreateHooks");
+
+	if (currentProcessIsIgnored()) {
+		PrintLog("... current process is ignored, not hooking into DirectInput");
+		return;
+	}
+
 	if (IsEqualIID(riidltf, IID_IDirectInput8A))
 	{
 		LPDIRECTINPUT8A pDIA = static_cast<LPDIRECTINPUT8A>(*realDI);
@@ -386,6 +454,7 @@ void CreateHooks(REFIID riidltf, LPVOID *realDI)
 		if (pDIW)
 		{
 			PrintLog("devreorder: using UNICODE interface");
+
 			if (pDIW->lpVtbl->EnumDevices)
 			{
 				EnumDevicesW = pDIW->lpVtbl->EnumDevices;
@@ -403,6 +472,13 @@ extern "C" HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, R
 
 	if (hr != DI_OK) return hr;
 
+	PrintLog("devreorder: in CreateHooks");
+
+	if (currentProcessIsIgnored()) {
+		PrintLog("... current process is ignored, not hooking into DirectInput");
+		return hr;
+	}
+
 	CreateHooks(riidltf, ppvOut);
 
 	return hr;
@@ -416,6 +492,12 @@ extern "C" HRESULT WINAPI DllCanUnloadNow(void)
 extern "C" HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID FAR* ppv)
 {
 	PrintLog("devreorder: Calling hooked DllGetClassObject");
+
+	if (currentProcessIsIgnored()) {
+		PrintLog("... current process is ignored, not hooking into DirectInput");
+		return DirectInputModuleManager::Get().DllGetClassObject(rclsid, riid, ppv);
+	}
+
 	IClassFactory *cf;
 	HRESULT hr = DirectInputModuleManager::Get().DllGetClassObject(rclsid, riid, (void**)&cf);
 
