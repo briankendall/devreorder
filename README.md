@@ -5,7 +5,7 @@ The main use of this tool is to bring some sanity to older DirectInput games tha
 
 There is no supported way to change this order, and the only method I found before writing devreorder was to physically unplug all of your devices and plug them back in the order that you want. This technique, however, falls apart when dealing with wireless and virtual devices. This tool finally allows the order to be defined explicitly.
 
-Tested in Windows 8.1, but should in theory work in any version of Windows. Note that this currently only works for games that use DirectInput 8. Any older games that make use of an earlier version of DirectInput will not be affected, nor will games that use a different API for reading controller input, including Xinput, the old joystick API in winmm.dll, raw input, and the low level Windows HID API.
+Tested in Windows 8.1, but should in theory work in any version of Windows. Note that this currently only works for games that use DirectInput 8. Any older games that make use of an earlier version of DirectInput will not be affected, nor will games that use a different API for reading controller input, including Xinput, the old joystick API in winmm.dll, raw input, and the low level Windows HID API. (Although games that use older versions DirectInput, i.e. they use dinput.dll rather than dinput8.dll, may work with devreorder when combined with [dinputto8](https://github.com/elishacloud/dinputto8).)
 
 ## How to use:
 
