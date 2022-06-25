@@ -44,7 +44,7 @@ If you want to affect the order of controllers for your entire system, that can 
 3. Open your `system32` directory, usually `C:\Windows\system32`
 4. Take ownership of the file `dinput8.dll` and change its permissions so that the Administrators group has full control of the file. I'm not going to provide instructions here as you can use your favorite search engine to figure out how to do this. If you're not comfortable taking ownership of a file then you probably shouldn't be tampering with your Windows directory!
 5. Rename `dinput8.dll` to `dinput8org.dll`
-6. If your Windows installation is 64-bit, copy `x64/dinput8.dll` from the release directory or release zip file into `system32`. If your system is 32-bit, copy `x86/dinput8.dll` into `system32` and skip to step 11.
+6. If your Windows installation is 64-bit, copy `x64/dinput8.dll` from the release directory or release zip file into `system32`. If your system is 32-bit (though these days that's uncommon), copy `x86/dinput8.dll` into `system32` and skip to step 12.
 7. Open your `sysWOW64` directory, usually `C:\Windows\sysWOW64`
 8. *If you're using TrackIR,* to prevent it from crashing, copy the original `dinput8.dll` from `sysWOW64` to the TrackIR directory. If you're not using TrackIR then you can ignore this step.
 9. Take ownership of `dinput8.dll` and change its permissions so that the Administrators group has full control
