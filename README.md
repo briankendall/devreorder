@@ -25,17 +25,29 @@ Please note that while these GUIDs are supposed to remain consistent for any one
 
 Finally, if you install devreorder system-wide, you can disable it for specific applications by adding their executable's filename to the `[ignored processes]` section. Be sure to include the file's extension too (which is usually `.exe`).
 
-**NOTE:** This method of using devreorder will not work for games that initialize DirectInput via the COM interface. If you follow these directions to apply devreorder to a single game and it is not having any effect, it is likely that the game is accessing the DirectInput COM interface. In that case, you will need to follow the directions in the [Apply to your entire system](#apply-to-your-entire-system) section.
+**NOTE:** This method of using devreorder will not work for games that initialize DirectInput via the COM interface. If you follow these directions to apply devreorder to a single game and it is not having any effect, it is likely that the game is accessing the DirectInput COM interface. In that case, you will need to follow the directions in the [Registry changes](#registry-changes) section.
 
 **NOTE #2:** If you get an error when running DeviceLister.exe that says something like `System.IO.FileNotFoundException: Could not load file or assembly 'Microsoft.DirectX.DirectInput'` then you probably need to install the DirectX 9 runtime. [Here's a link to Microsoft's installer.](https://www.microsoft.com/en-us/download/details.aspx?id=8109)
 
 ### Use one settings file for all games
 
-If you want to have a single devreorder.ini file that applies to all games, copy it to `C:\ProgramData\devreorder\devreorder.ini` (or wherever. your program-data folder is) The wrapper DLL will always check the game's current directory for devreorder.ini and, failing that, then check `C:\ProgramData\devreorder\devreorder.ini` so you can always change the settings on a per-game basis if you prefer.:
+If you want to have a single devreorder.ini file that applies to all games, copy it to `C:\ProgramData\devreorder\devreorder.ini` (or wherever. your program-data folder is) The wrapper DLL will always check the game's current directory for devreorder.ini and, failing that, then check `C:\ProgramData\devreorder\devreorder.ini` so you can always change the settings on a per-game basis if you prefer.
+
+### Registry changes
+
+As noted above, some games initialize DirectInput via COM. Starting from Windows 8, by default this ignores `dinput8.dll` from the application directory in favour of a system one, however this behaviour can be changed with a registry entry localized to the current user (therefore, this change does not require Administrator rights). With these changes, DI COM interfaces will load from `dinput8.dll` from the game directory, if one exists, and loaded from a system directory otherwise.
+
+To make these changes, open the Command Prompt and run the following commands **exactly** as follows:
+```
+reg add HKCU\Software\Classes\CLSID\{25E609E4-B259-11CF-BFC7-444553540000}\InprocServer32 /ve /t REG_SZ /d dinput8.dll /reg:32
+reg add HKCU\Software\Classes\CLSID\{25E609E4-B259-11CF-BFC7-444553540000}\InprocServer32 /ve /t REG_SZ /d dinput8.dll /reg:64
+reg add HKCU\Software\Classes\CLSID\{25E609E5-B259-11CF-BFC7-444553540000}\InprocServer32 /ve /t REG_SZ /d dinput8.dll /reg:32
+reg add HKCU\Software\Classes\CLSID\{25E609E5-B259-11CF-BFC7-444553540000}\InprocServer32 /ve /t REG_SZ /d dinput8.dll /reg:64
+```
 
 ### Apply to your entire system
 
-(Warning! The following method involves changing DLL files in your Windows directory. Do not use this method unless you are comfortable making potentially breaking changes to your system and you understand the consequences, including the security implications. Proceed at your own peril!)
+(Warning! The following method involves changing DLL files in your Windows directory and is generally not recommended. Do not use this method unless you are comfortable making potentially breaking changes to your system and you understand the consequences, including the security implications. Proceed at your own peril!)
 
 If you want to affect the order of controllers for your entire system, that can be accomplished with the following:
 
