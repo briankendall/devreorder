@@ -3,6 +3,11 @@
 #include "stdafx.h"
 #include <dinput.h>
 #include <list>
+#include <initguid.h>
+#include <Cfgmgr32.h>
+#include <Devpkey.h>
+#include <locale>
+#include <codecvt>
 
 #include "dinput8.h"
 #include "Common.h"
@@ -16,13 +21,19 @@ using namespace std;
 enum MatchType {
 	kNoMatch,
 	kNameMatch,
-	kGUIDMatch
+	kGUIDMatch,
+	kDeviceInstanceIDMatch,
 };
 
 HRESULT(STDMETHODCALLTYPE *TrueEnumDevicesA) (LPDIRECTINPUT8A This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags) = nullptr;
 HRESULT(STDMETHODCALLTYPE *TrueEnumDevicesW) (LPDIRECTINPUT8W This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags) = nullptr;
 HRESULT(STDMETHODCALLTYPE *EnumDevicesA) (LPDIRECTINPUT8A This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags) = nullptr;
 HRESULT(STDMETHODCALLTYPE *EnumDevicesW) (LPDIRECTINPUT8W This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags) = nullptr;
+
+struct EnumCallbackUserData {
+	void* di;
+	void* enumData;
+};
 
 vector<wstring> loadAllKeysFromSectionOfIni(const wstring &section)
 {
@@ -245,6 +256,94 @@ wstring GUIDToWString(const GUID &guid)
 	return wstring(result);
 }
 
+
+std::wstring getDeviceInstanceIdProperty(const DIPROPGUIDANDPATH& iap)
+{
+	DEVPROPTYPE propertyType;
+	ULONG propertySize = 0;
+	CONFIGRET cr = CM_Get_Device_Interface_PropertyW(iap.wszPath, &DEVPKEY_Device_InstanceId, &propertyType, nullptr, &propertySize, 0);
+
+	if (cr != CR_BUFFER_SMALL) {
+		return std::wstring();
+	}
+
+	std::wstring deviceId;
+	deviceId.resize(propertySize);
+	cr = ::CM_Get_Device_Interface_PropertyW(iap.wszPath, &DEVPKEY_Device_InstanceId, &propertyType, (PBYTE)deviceId.data(), &propertySize, 0);
+
+	if (cr != CR_SUCCESS) {
+		return std::wstring();
+	}
+
+	// There may be trailing null characters in the string that we need to remove so we can append to it:
+	deviceId.erase(std::find(deviceId.begin(), deviceId.end(), L'\0'), deviceId.end());
+
+	return deviceId;
+}
+
+void getDeviceInstanceId(LPCDIDEVICEINSTANCEA deviceInstance, EnumCallbackUserData *userData, string &deviceInstanceId)
+{
+	if (deviceInstanceId.size() > 0) {
+		// Already got the device instance ID
+		return;
+	}
+
+	LPDIRECTINPUT8A di = (LPDIRECTINPUT8A)userData->di;
+	IDirectInputDevice8A *device;
+	IDirectInput_CreateDevice(di, deviceInstance->guidInstance, &device, NULL);
+
+	DIPROPGUIDANDPATH iap = {};
+	iap.diph.dwSize = sizeof(DIPROPGUIDANDPATH);
+	iap.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+	iap.diph.dwHow = DIPH_DEVICE;
+
+	std::wstring deviceIdWide;
+
+	if (SUCCEEDED(IDirectInputDevice_GetProperty(device, DIPROP_GUIDANDPATH, &iap.diph))) {
+		deviceIdWide = trim(toLower(getDeviceInstanceIdProperty(iap)));
+		deviceIdWide.insert(0, L"<");
+		deviceIdWide.append(L">");
+	} else {
+		PrintLog("Error: failed to get device instance ID for: %s", deviceInstance->tszProductName);
+		// guaranteed not to match anything
+		deviceIdWide = L"!";
+	}
+
+	using convertType = std::codecvt_utf8<wchar_t>;
+	std::wstring_convert<convertType, wchar_t> converter;
+	deviceInstanceId = converter.to_bytes(deviceIdWide);
+
+	IDirectInputDevice_Release(device);
+}
+
+void getDeviceInstanceId(LPCDIDEVICEINSTANCEW deviceInstance, EnumCallbackUserData* userData, wstring& deviceInstanceId)
+{
+	if (deviceInstanceId.size() > 0) {
+		// Already got the device instance ID
+		return;
+	}
+
+	LPDIRECTINPUT8W di = (LPDIRECTINPUT8W)userData->di;
+	IDirectInputDevice8W *device;
+	IDirectInput_CreateDevice(di, deviceInstance->guidInstance, &device, NULL);
+
+	DIPROPGUIDANDPATH iap = {};
+	iap.diph.dwSize = sizeof(DIPROPGUIDANDPATH);
+	iap.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+	iap.diph.dwHow = DIPH_DEVICE;
+
+	if (SUCCEEDED(IDirectInputDevice_GetProperty(device, DIPROP_GUIDANDPATH, &iap.diph))) {
+		deviceInstanceId = trim(toLower(getDeviceInstanceIdProperty(iap)));
+		deviceInstanceId.insert(0, L"<");
+		deviceInstanceId.append(L">");
+	} else {
+		PrintLog(L"Error: failed to get device instance ID for: %s", deviceInstance->tszProductName);
+		deviceInstanceId = L"!";
+	}
+
+	IDirectInputDevice_Release(device);
+}
+
 bool currentProcessIsIgnored()
 {
 	WCHAR currentProcessPathCStr[MAX_PATH];
@@ -274,7 +373,7 @@ bool currentProcessIsIgnored()
 	return false;
 }
 
-MatchType deviceMatchesEntry(LPCDIDEVICEINSTANCEA deviceInstance, const string &entry)
+MatchType deviceMatchesEntry(LPCDIDEVICEINSTANCEA deviceInstance, EnumCallbackUserData* userData, string &deviceInstanceId, const string &entry)
 {
 	string trimmedEntry = trim(entry);
 	string deviceIdentifier;
@@ -287,6 +386,12 @@ MatchType deviceMatchesEntry(LPCDIDEVICEINSTANCEA deviceInstance, const string &
 		deviceIdentifier = GUIDToString(deviceInstance->guidInstance);
 		trimmedEntry = toLower(trimmedEntry);
 		return (deviceIdentifier == trimmedEntry) ? kGUIDMatch : kNoMatch;
+	} else if (entry[0] == '<') {
+		trimmedEntry = toLower(trimmedEntry);
+		getDeviceInstanceId(deviceInstance, userData, deviceInstanceId);
+		PrintLog("  a: %s", trimmedEntry.c_str());
+		PrintLog("  b: %s", deviceInstanceId.c_str());
+		return (deviceInstanceId == trimmedEntry) ? kDeviceInstanceIDMatch : kNoMatch;
 	} else {
 		deviceIdentifier = trim(deviceInstance->tszProductName);
 		return (deviceIdentifier == trimmedEntry) ? kNameMatch : kNoMatch;
@@ -294,7 +399,7 @@ MatchType deviceMatchesEntry(LPCDIDEVICEINSTANCEA deviceInstance, const string &
 
 }
 
-MatchType deviceMatchesEntry(LPCDIDEVICEINSTANCEW deviceInstance, const wstring &entry)
+MatchType deviceMatchesEntry(LPCDIDEVICEINSTANCEW deviceInstance, EnumCallbackUserData* userData, wstring& deviceInstanceId, const wstring &entry)
 {
 	wstring trimmedEntry = trim(entry);
 	wstring deviceIdentifier;
@@ -303,25 +408,33 @@ MatchType deviceMatchesEntry(LPCDIDEVICEINSTANCEW deviceInstance, const wstring 
 		return kNoMatch;
 	}
 
-	if (entry[0] == '{') {
+	if (entry[0] == L'{') {
 		deviceIdentifier = GUIDToWString(deviceInstance->guidInstance);
 		trimmedEntry = toLower(trimmedEntry);
 		return (deviceIdentifier == trimmedEntry) ? kGUIDMatch : kNoMatch;
+	} else if (entry[0] == L'<') {
+		trimmedEntry = toLower(trimmedEntry);
+		getDeviceInstanceId(deviceInstance, userData, deviceInstanceId);
+		PrintLog(L"  a: %s", trimmedEntry.c_str());
+		PrintLog(L"  b: %s", deviceInstanceId.c_str());
+		return (deviceInstanceId == trimmedEntry) ? kDeviceInstanceIDMatch : kNoMatch;
 	} else {
 		deviceIdentifier = trim(deviceInstance->tszProductName);
 		return (deviceIdentifier == trimmedEntry) ? kNameMatch : kNoMatch;
 	}
 }
 
-BOOL CALLBACK enumCallbackA(LPCDIDEVICEINSTANCEA deviceInstance, LPVOID userData)
+BOOL CALLBACK enumCallbackA(LPCDIDEVICEINSTANCEA deviceInstance, LPVOID userDataPtr)
 {
-	DeviceEnumData<DIDEVICEINSTANCEA> *enumData = (DeviceEnumData<DIDEVICEINSTANCEA> *)userData;
+	EnumCallbackUserData *userData = (EnumCallbackUserData *)userDataPtr;
+	DeviceEnumData<DIDEVICEINSTANCEA> *enumData = (DeviceEnumData<DIDEVICEINSTANCEA> *)userData->enumData;
 	vector<string> &order = sortedControllersA();
 	vector<string> &hidden = hiddenControllersA();
 	vector<string> &visible = visibleControllersA();
+	string deviceInstanceId;
 
 	for (unsigned int i = 0; i < hidden.size(); ++i) {
-		if (deviceMatchesEntry(deviceInstance, hidden[i])) {
+		if (deviceMatchesEntry(deviceInstance, userData, deviceInstanceId, hidden[i])) {
 			PrintLog("devreorder: product \"%s\" is hidden", deviceInstance->tszProductName);
 			return DIENUM_CONTINUE;
 		}
@@ -334,7 +447,7 @@ BOOL CALLBACK enumCallbackA(LPCDIDEVICEINSTANCEA deviceInstance, LPVOID userData
 		bool isVisible = false;
 
 		for (unsigned int i = 0; i < visible.size(); ++i) {
-			if (deviceMatchesEntry(deviceInstance, visible[i])) {
+			if (deviceMatchesEntry(deviceInstance, userData, deviceInstanceId, visible[i])) {
 				isVisible = true;
 			}
 		}
@@ -348,13 +461,19 @@ BOOL CALLBACK enumCallbackA(LPCDIDEVICEINSTANCEA deviceInstance, LPVOID userData
 	int nameMatchIndex = -1;
 
 	for (unsigned int i = 0; i < order.size(); ++i) {
-		MatchType match = deviceMatchesEntry(deviceInstance, order[i]);
+		MatchType match = deviceMatchesEntry(deviceInstance, userData, deviceInstanceId, order[i]);
 
-		// Important that we prioritize a match via GUID over a match via name
-		if (match == kGUIDMatch) {
+		// Important that we prioritize a match via device instance ID or GUID over a match via name
+		if (match == kDeviceInstanceIDMatch) {
+			PrintLog("devreorder: product \"%s\" is sorted up by device instance ID", deviceInstance->tszProductName);
+			enumData->sorted[i].push_back(*deviceInstance);
+			return DIENUM_CONTINUE;
+
+		} else if (match == kGUIDMatch) {
 			PrintLog("devreorder: product \"%s\" is sorted up by GUID", deviceInstance->tszProductName);
 			enumData->sorted[i].push_back(*deviceInstance);
 			return DIENUM_CONTINUE;
+
 		} else if (match == kNameMatch) {
 			nameMatchIndex = i;
 		}
@@ -371,16 +490,17 @@ BOOL CALLBACK enumCallbackA(LPCDIDEVICEINSTANCEA deviceInstance, LPVOID userData
 	return DIENUM_CONTINUE;
 }
 
-BOOL CALLBACK enumCallbackW(LPCDIDEVICEINSTANCEW deviceInstance, LPVOID userData)
+BOOL CALLBACK enumCallbackW(LPCDIDEVICEINSTANCEW deviceInstance, LPVOID userDataPtr)
 {
-
-	DeviceEnumData<DIDEVICEINSTANCEW> *enumData = (DeviceEnumData<DIDEVICEINSTANCEW> *)userData;
+	EnumCallbackUserData *userData = (EnumCallbackUserData *)userDataPtr;
+	DeviceEnumData<DIDEVICEINSTANCEW> *enumData = (DeviceEnumData<DIDEVICEINSTANCEW> *)userData->enumData;
 	vector<wstring> &order = sortedControllersW();
 	vector<wstring> &hidden = hiddenControllersW();
 	vector<wstring> &visible = visibleControllersW();
+	wstring deviceInstanceId;
 
 	for (unsigned int i = 0; i < hidden.size(); ++i) {
-		if (deviceMatchesEntry(deviceInstance, hidden[i])) {
+		if (deviceMatchesEntry(deviceInstance, userData, deviceInstanceId, hidden[i])) {
 			PrintLog(L"devreorder: product \"%s\" is hidden", deviceInstance->tszProductName);
 			return DIENUM_CONTINUE;
 		}
@@ -393,7 +513,7 @@ BOOL CALLBACK enumCallbackW(LPCDIDEVICEINSTANCEW deviceInstance, LPVOID userData
 		bool isVisible = false;
 
 		for (unsigned int i = 0; i < visible.size(); ++i) {
-			if (deviceMatchesEntry(deviceInstance, visible[i])) {
+			if (deviceMatchesEntry(deviceInstance, userData, deviceInstanceId, visible[i])) {
 				isVisible = true;
 			}
 		}
@@ -407,13 +527,19 @@ BOOL CALLBACK enumCallbackW(LPCDIDEVICEINSTANCEW deviceInstance, LPVOID userData
 	int nameMatchIndex = -1;
 
 	for (unsigned int i = 0; i < order.size(); ++i) {
-		MatchType match = deviceMatchesEntry(deviceInstance, order[i]);
+		MatchType match = deviceMatchesEntry(deviceInstance, userData, deviceInstanceId, order[i]);
 
-		// Important that we prioritize a match via GUID over a match via name
-		if (match == kGUIDMatch) {
+		// Important that we prioritize a match via device instance ID or GUID over a match via name
+		if (match == kDeviceInstanceIDMatch) {
+			PrintLog(L"devreorder: product \"%s\" is sorted up by device instance ID", deviceInstance->tszProductName);
+			enumData->sorted[i].push_back(*deviceInstance);
+			return DIENUM_CONTINUE;
+
+		} else if (match == kGUIDMatch) {
 			PrintLog(L"devreorder: product \"%s\" is sorted up by GUID", deviceInstance->tszProductName);
 			enumData->sorted[i].push_back(*deviceInstance);
 			return DIENUM_CONTINUE;
+
 		} else if (match == kNameMatch) {
 			nameMatchIndex = i;
 		}
@@ -434,11 +560,14 @@ HRESULT STDMETHODCALLTYPE HookEnumDevicesA(LPDIRECTINPUT8A This, DWORD dwDevType
 {
 	vector<string> &order = sortedControllersA();
 	DeviceEnumData<DIDEVICEINSTANCEA> enumData;
-
 	enumData.sorted.resize(order.size());
 
+	EnumCallbackUserData userData;
+	userData.enumData = (void *)&enumData;
+	userData.di = (void *)This;
+
 	PrintLog("devreorder: determining new sorting order for devices");
-	HRESULT result = TrueEnumDevicesA(This, dwDevType, enumCallbackA, (LPVOID)&enumData, dwFlags);
+	HRESULT result = TrueEnumDevicesA(This, dwDevType, enumCallbackA, (LPVOID)&userData, dwFlags);
 
 	if (result != DI_OK) {
 		return result;
@@ -465,11 +594,14 @@ HRESULT STDMETHODCALLTYPE HookEnumDevicesW(LPDIRECTINPUT8W This, DWORD dwDevType
 {
 	vector<wstring> &order = sortedControllersW();
 	DeviceEnumData<DIDEVICEINSTANCEW> enumData;
-
 	enumData.sorted.resize(order.size());
 
+	EnumCallbackUserData userData;
+	userData.enumData = (void *)&enumData;
+	userData.di = (void *)This;
+
 	PrintLog("devreorder: determining new sorting order for devices");
-	HRESULT result = TrueEnumDevicesW(This, dwDevType, enumCallbackW, (LPVOID)&enumData, dwFlags);
+	HRESULT result = TrueEnumDevicesW(This, dwDevType, enumCallbackW, (LPVOID)&userData, dwFlags);
 
 	if (result != DI_OK) {
 		return result;

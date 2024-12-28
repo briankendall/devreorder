@@ -51,7 +51,7 @@
             this.textBox.Name = "textBox";
             this.textBox.ReadOnly = true;
             this.textBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBox.Size = new System.Drawing.Size(471, 267);
+            this.textBox.Size = new System.Drawing.Size(745, 267);
             this.textBox.TabIndex = 1;
             this.textBox.WordWrap = false;
             // 
@@ -59,7 +59,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(495, 291);
+            this.ClientSize = new System.Drawing.Size(769, 291);
             this.Controls.Add(this.textBox);
             this.Controls.Add(this.label1);
             this.Name = "DeviceListerForm";
